@@ -67,3 +67,9 @@ _bmad-cache/
 *.tar
 *.tar.gz
 *.rar
+
+# SSH 密钥（敏感文件）
+*_rsa
+*_ed25519
+*.pem
+*.key
