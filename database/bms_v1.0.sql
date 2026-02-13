@@ -74,6 +74,7 @@ CREATE TABLE `bms_permissions` (
   `icon` VARCHAR(50) DEFAULT NULL COMMENT '图标（Element Plus 图标名）',
   `is_hidden` TINYINT(4) DEFAULT '0' COMMENT '是否隐藏（0=显示,1=隐藏）',
   `is_affix` TINYINT(4) DEFAULT '0' COMMENT '是否固定标签（0=否,1=是）',
+  `is_cache` TINYINT(4) DEFAULT '0' COMMENT '是否开启缓存（0=否,1=是）',
   `sort_order` INT(11) DEFAULT '0' COMMENT '排序（数字越小越靠前）',
   `status` TINYINT(4) DEFAULT '1' COMMENT '状态（0=禁用,1=启用）',
   `created_at` INT(11) NOT NULL COMMENT '创建时间（时间戳）',
@@ -208,8 +209,8 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `ic
 (0, '系统首页', 'workspace', 1, '', 'HomeFilled', 100, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 1.2 首页/仪表盘
-INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `is_affix`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(1, '工作台', 'workspace:dashboard', 2, '/', 'views/Dashboard.vue', 'Platform', 0, 10, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `is_affix`, `is_cache`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
+(1, '工作台', 'workspace:dashboard', 2, '/', 'views/Dashboard.vue', 'Platform', 0, 1, 10, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- ========================================
 -- 2. 系统管理
@@ -220,8 +221,8 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `ic
 (0, '系统管理', 'system', 1, '', 'Tools', 200, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 2.2 管理员管理
-INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(3, '管理员管理', 'system:admin', 2, '/system/admin', 'views/system/AdminList.vue', 'User', 10, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `is_cache`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
+(3, '管理员管理', 'system:admin', 2, '/system/admin', 'views/system/AdminList.vue', 'User', 1, 10, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 管理员按钮权限
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
@@ -236,8 +237,8 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order
 (4, '删除管理员API', 'admin/admin/delete', 4, 7, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 2.3 角色管理
-INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(3, '角色管理', 'system:role', 2, '/system/role', 'views/system/RoleList.vue', 'MapLocation', 20, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `is_cache`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
+(3, '角色管理', 'system:role', 2, '/system/role', 'views/system/RoleList.vue', 'MapLocation', 1, 20, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 角色按钮权限
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
@@ -254,8 +255,8 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order
 (11, '分配权限API', 'admin/role/assignpermission', 4, 8, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 2.4 权限菜单管理
-INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(3, '权限菜单管理', 'system:permission', 2, '/system/permission', 'views/system/PermissionList.vue', 'Lock', 30, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `is_cache`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
+(3, '权限菜单管理', 'system:permission', 2, '/system/permission', 'views/system/PermissionList.vue', 'Lock', 1, 30, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 权限菜单按钮权限
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
@@ -270,8 +271,8 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order
 (20, '删除菜单API', 'admin/permission/delete', 4, 6, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 2.5 系统配置
-INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(3, '系统配置', 'system:config', 2, '/system/config', 'views/system/Config.vue', 'Discount', 40, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `is_cache`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
+(3, '系统配置', 'system:config', 2, '/system/config', 'views/system/Config.vue', 'Discount', 1, 40, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 系统配置按钮权限
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
@@ -286,8 +287,8 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order
 (27, '删除配置API', 'admin/config/delete', 4, 6, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 2.6 定时任务
-INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(3, '定时任务', 'system:crontab', 2, '/system/crontab', 'views/system/CrontabList.vue', 'Clock', 50, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `is_cache`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
+(3, '定时任务', 'system:crontab', 2, '/system/crontab', 'views/system/CrontabList.vue', 'Clock', 1, 50, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 定时任务按钮权限
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES

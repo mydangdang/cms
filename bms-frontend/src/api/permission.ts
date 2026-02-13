@@ -24,6 +24,7 @@ export interface Permission {
   icon?: string
   is_hidden: number
   is_affix: number
+  is_cache: number // 是否开启缓存：0=否，1=是
   sort_order: number
   status: number
   children?: Permission[]

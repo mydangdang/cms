@@ -192,6 +192,11 @@ import { usePermission } from '@/composables/usePermission'
 import { isToday, formatTimestamp, STATUS_OPTIONS } from '@/utils/commonUtils'
 import StatusTag from '@/components/Common/StatusTag.vue'
 
+// 组件名称用于 KeepAlive 缓存
+defineOptions({
+  name: 'system:crontab'
+})
+
 /**
  * 定时任务列表页面
  * Story 4.3: 定时任务页面（前端）

@@ -44,6 +44,11 @@
 import { computed } from 'vue'
 import { useAdminStore } from '@/store/modules/admin'
 
+// 组件名称用于 KeepAlive 缓存
+defineOptions({
+  name: 'Dashboard'
+})
+
 const adminStore = useAdminStore()
 
 const adminInfo = computed(() => adminStore.adminInfo)

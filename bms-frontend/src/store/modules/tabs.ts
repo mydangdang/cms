@@ -7,6 +7,7 @@ export interface Tab {
   name: string
   title: string
   affix?: boolean
+  noCache?: boolean // 是否禁用缓存
 }
 
 export const useTabsStore = defineStore('tabs', () => {
@@ -16,11 +17,36 @@ export const useTabsStore = defineStore('tabs', () => {
   // 当前激活的 tab
   const activeTab = ref('')
 
+  // Keep-Alive 缓存的组件名称列表
+  const cachedViews = ref<string[]>([])
+
   // 获取所有 tabs
   const getTabs = computed(() => tabs.value)
 
   // 获取当前激活的 tab
   const getActiveTab = computed(() => activeTab.value)
+
+  // 获取缓存的组件名称列表
+  const getCachedViews = computed(() => cachedViews.value)
+
+  /**
+   * 添加缓存视图
+   */
+  const addCachedView = (name: string) => {
+    if (name && !cachedViews.value.includes(name)) {
+      cachedViews.value.push(name)
+    }
+  }
+
+  /**
+   * 移除缓存视图
+   */
+  const removeCachedView = (name: string) => {
+    const index = cachedViews.value.indexOf(name)
+    if (index > -1) {
+      cachedViews.value.splice(index, 1)
+    }
+  }
 
   /**
    * 添加 tab
@@ -41,7 +67,8 @@ export const useTabsStore = defineStore('tabs', () => {
       path,
       name: String(name || path),
       title: String(meta?.title || '未命名'),
-      affix: meta?.affix === true
+      affix: meta?.affix === true,
+      noCache: meta?.noCache === true
     }
 
     tabs.value.push(newTab)
@@ -56,11 +83,15 @@ export const useTabsStore = defineStore('tabs', () => {
     if (targetIndex === -1) return
 
     const targetTab = tabs.value[targetIndex]
+    if (!targetTab) return
 
     // 如果移除的是固定 tab，不允许移除
     if (targetTab.affix) {
       return
     }
+
+    // 从缓存中移除
+    removeCachedView(targetTab.name)
 
     tabs.value.splice(targetIndex, 1)
 
@@ -69,7 +100,10 @@ export const useTabsStore = defineStore('tabs', () => {
       if (tabs.value.length > 0) {
         // 激活右侧的 tab，如果没有则激活左侧
         const nextIndex = targetIndex >= tabs.value.length ? tabs.value.length - 1 : targetIndex
-        activeTab.value = tabs.value[nextIndex].path
+        const nextTab = tabs.value[nextIndex]
+        if (nextTab) {
+          activeTab.value = nextTab.path
+        }
       } else {
         activeTab.value = ''
       }
@@ -87,6 +121,13 @@ export const useTabsStore = defineStore('tabs', () => {
    * 关闭其他 tabs
    */
   const closeOtherTabs = (targetPath: string) => {
+    // 先移除需要关闭的 tab 的缓存
+    tabs.value.forEach((tab) => {
+      if (tab.path !== targetPath && !tab.affix) {
+        removeCachedView(tab.name)
+      }
+    })
+
     tabs.value = tabs.value.filter((tab) => tab.path === targetPath || tab.affix)
     if (!tabs.value.find((tab) => tab.path === targetPath)) {
       activeTab.value = targetPath
@@ -97,9 +138,17 @@ export const useTabsStore = defineStore('tabs', () => {
    * 关闭所有 tabs（保留固定的）
    */
   const closeAllTabs = () => {
+    // 先移除所有非固定 tab 的缓存
+    tabs.value.forEach((tab) => {
+      if (!tab.affix) {
+        removeCachedView(tab.name)
+      }
+    })
+
     tabs.value = tabs.value.filter((tab) => tab.affix)
-    if (tabs.value.length > 0) {
-      activeTab.value = tabs.value[0].path
+    const firstTab = tabs.value[0]
+    if (firstTab) {
+      activeTab.value = firstTab.path
     } else {
       activeTab.value = ''
     }
@@ -121,6 +170,13 @@ export const useTabsStore = defineStore('tabs', () => {
 
     // 固定 tab 的路径集合，用于去重
     const affixPaths = new Set(affixTabs.map((tab) => tab.path))
+
+    // 移除需要关闭的 tab 的缓存（目标 tab 左侧且非固定的）
+    tabs.value.slice(0, targetIndex).forEach((tab) => {
+      if (!tab.affix) {
+        removeCachedView(tab.name)
+      }
+    })
 
     // 合并：固定 tab + 目标 tab 及其右侧的 tab（排除已在固定 tab 中的）
     tabs.value = [
@@ -151,6 +207,13 @@ export const useTabsStore = defineStore('tabs', () => {
     // 固定 tab 的路径集合，用于去重
     const affixPaths = new Set(affixTabs.map((tab) => tab.path))
 
+    // 移除需要关闭的 tab 的缓存（目标 tab 右侧且非固定的）
+    tabs.value.slice(targetIndex + 1).forEach((tab) => {
+      if (!tab.affix) {
+        removeCachedView(tab.name)
+      }
+    })
+
     // 合并：固定 tab + 目标 tab 及其左侧的 tab（排除已在固定 tab 中的）
     tabs.value = [
       ...affixTabs,
@@ -166,9 +229,13 @@ export const useTabsStore = defineStore('tabs', () => {
   return {
     tabs,
     activeTab,
+    cachedViews,
     getTabs,
     getActiveTab,
+    getCachedViews,
     addTab,
+    addCachedView,
+    removeCachedView,
     removeTab,
     setActiveTab,
     closeOtherTabs,

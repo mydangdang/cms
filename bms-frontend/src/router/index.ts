@@ -35,6 +35,7 @@ const initialRoutes: RouteRecordRaw[] = [
     meta: {
       title: '首页',
       affix: true,
+      noCache: false, // 首页默认开启缓存
       requiresAuth: true
     }
   }
@@ -99,6 +100,7 @@ const generateRoutes = (permissions: Permission[]): RouteRecordRaw[] => {
           icon: permission.icon,
           hidden: permission.is_hidden === 1,
           affix: permission.is_affix === 1,
+          noCache: permission.is_cache !== 1, // is_cache=1 时 noCache=false（启用缓存）
           permission_id: permission.permission_id
         }
       }

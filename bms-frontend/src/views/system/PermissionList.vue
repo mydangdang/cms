@@ -54,6 +54,13 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="缓存" width="80" align="center">
+          <template #default="{ row }">
+            <el-tag :type="row.is_cache === 1 ? 'success' : 'info'" size="small">
+              {{ row.is_cache === 1 ? '是' : '否' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="150">
           <template #default="{ row }">
             <StatusTag :status="row.status" />
@@ -132,14 +139,19 @@
           </el-col>
         </el-row>
         <el-row :gutter="20" v-if="[1, 2].includes(formData.type)">
-          <el-col :span="12">
+          <el-col :span="8">
             <el-form-item label="是否隐藏">
               <el-switch v-model="formData.is_hidden" :active-value="1" :inactive-value="0" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="8">
             <el-form-item label="是否固定">
               <el-switch v-model="formData.is_affix" :active-value="1" :inactive-value="0" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="开启缓存">
+              <el-switch v-model="formData.is_cache" :active-value="1" :inactive-value="0" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -169,6 +181,11 @@ import {
   type Permission
 } from '@/api/permission'
 import StatusTag from '@/components/Common/StatusTag.vue'
+
+// 组件名称用于 KeepAlive 缓存
+defineOptions({
+  name: 'system:permission'
+})
 
 /**
  * 权限列表页面
@@ -218,6 +235,7 @@ const formData = reactive({
   icon: '',
   is_hidden: 0,
   is_affix: 0,
+  is_cache: 0,
   sort_order: 0,
   status: 1
 })
@@ -245,6 +263,7 @@ const handleAdd = () => {
     icon: '',
     is_hidden: 0,
     is_affix: 0,
+    is_cache: 0,
     sort_order: 0,
     status: 1
   })
@@ -267,6 +286,7 @@ const handleAddChild = (row: Permission) => {
     icon: '',
     is_hidden: 0,
     is_affix: 0,
+    is_cache: 0,
     sort_order: 0,
     status: 1
   })
@@ -289,6 +309,7 @@ const handleEdit = (row: Permission) => {
     icon: row.icon || '',
     is_hidden: row.is_hidden,
     is_affix: row.is_affix,
+    is_cache: row.is_cache,
     sort_order: row.sort_order,
     status: row.status
   })
@@ -317,6 +338,7 @@ const handleSubmit = async () => {
         icon: formData.icon,
         is_hidden: formData.is_hidden,
         is_affix: formData.is_affix,
+        is_cache: formData.is_cache,
         sort_order: formData.sort_order,
         status: formData.status
       })
@@ -332,6 +354,7 @@ const handleSubmit = async () => {
         icon: formData.icon,
         is_hidden: formData.is_hidden,
         is_affix: formData.is_affix,
+        is_cache: formData.is_cache,
         sort_order: formData.sort_order,
         status: formData.status
       })

@@ -129,6 +129,11 @@ import { getRoleList, type Role } from '@/api/role'
 import { isToday, formatTimestamp, STATUS_OPTIONS } from '@/utils/commonUtils'
 import StatusTag from '@/components/Common/StatusTag.vue'
 
+// 组件名称用于 KeepAlive 缓存
+defineOptions({
+  name: 'system:admin'
+})
+
 /**
  * 管理员列表页面
  * Story 2.3: 管理员管理（后端 API）

@@ -157,6 +157,11 @@ import {
 } from '@/api/config'
 import { isToday, formatTimestamp } from '@/utils/commonUtils'
 
+// 组件名称用于 KeepAlive 缓存
+defineOptions({
+  name: 'system:config'
+})
+
 /**
  * 系统配置列表页面
  * Story 3.1: 系统配置管理

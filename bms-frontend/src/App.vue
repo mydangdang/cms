@@ -14,7 +14,7 @@ const showLayout = computed(() => {
   return route.meta.requiresAuth !== false && route.path !== '/login'
 })
 
-// 监听路由变化，自动添加 tab
+// 监听路由变化，自动添加 tab 和缓存
 watch(
   () => route.path,
   (newPath) => {
@@ -22,6 +22,10 @@ watch(
       // 只在路由信息完整时添加标签（避免刷新时创建格式错误的标签）
       if (route.meta?.title && route.name) {
         tabsStore.addTab(route)
+        // 添加缓存（如果路由没有设置 noCache）
+        if (route.meta.noCache !== true) {
+          tabsStore.addCachedView(String(route.name))
+        }
       }
       tabsStore.setActiveTab(newPath)
     }
@@ -52,6 +56,9 @@ onMounted(() => {
         tabsStore.tabs[existingIndex] = homeTab
       }
 
+      // 添加首页到缓存
+      tabsStore.addCachedView('Dashboard')
+
       // 激活当前页面标签
       tabsStore.setActiveTab(route.path)
     } catch (error) {
@@ -81,7 +88,11 @@ onMounted(() => {
 
         <!-- 主内容区域 -->
         <div class="layout-content">
-          <RouterView />
+          <RouterView v-slot="{ Component }">
+            <KeepAlive :include="tabsStore.getCachedViews">
+              <component :is="Component" :key="route.path" />
+            </KeepAlive>
+          </RouterView>
         </div>
       </div>
     </div>

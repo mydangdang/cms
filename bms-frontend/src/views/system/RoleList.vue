@@ -122,6 +122,11 @@ import { getPermissionList, type Permission } from '@/api/permission'
 import { STATUS_OPTIONS } from '@/utils/commonUtils'
 import StatusTag from '@/components/Common/StatusTag.vue'
 
+// 组件名称用于 KeepAlive 缓存
+defineOptions({
+  name: 'system:role'
+})
+
 /**
  * 角色列表页面
  * Story 2.2: 角色管理（后端 API）

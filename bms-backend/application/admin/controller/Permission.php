@@ -88,6 +88,7 @@ class Permission extends Base
         $icon = $request->param('icon', '');
         $isHidden = $request->param('is_hidden', 0);
         $isAffix = $request->param('is_affix', 0);
+        $isCache = $request->param('is_cache', 0);
         $sortOrder = $request->param('sort_order', 0);
         $status = $request->param('status', 1);
 
@@ -129,6 +130,7 @@ class Permission extends Base
             'icon' => $icon,
             'is_hidden' => $isHidden,
             'is_affix' => $isAffix,
+            'is_cache' => $isCache,
             'sort_order' => $sortOrder,
             'status' => $status
         );
@@ -163,6 +165,7 @@ class Permission extends Base
         $icon = $request->param('icon', '');
         $isHidden = $request->param('is_hidden', 0);
         $isAffix = $request->param('is_affix', 0);
+        $isCache = $request->param('is_cache', 0);
         $sortOrder = $request->param('sort_order', 0);
         $status = $request->param('status', 1);
 
@@ -225,6 +228,7 @@ class Permission extends Base
             'icon' => $icon,
             'is_hidden' => $isHidden,
             'is_affix' => $isAffix,
+            'is_cache' => $isCache,
             'sort_order' => $sortOrder,
             'status' => $status
         );
