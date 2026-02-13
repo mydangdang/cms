@@ -1,0 +1,69 @@
+# ==================== 全局忽略 ====================
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# IDE / 编辑器
+.idea/
+.vscode/
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# 日志文件
+*.log
+logs/
+
+# ==================== 后端 (PHP/ThinkPHP) ====================
+
+# ThinkPHP 框架核心（通过 composer 安装）
+bms-backend/thinkphp/
+
+# Composer
+composer.lock
+vendor/
+
+# 运行时目录
+bms-backend/runtime/
+
+# 上传文件（可选，根据需要调整）
+# bms-backend/public/uploads/
+
+# ==================== 前端 (Vue/Vite) ====================
+
+# 依赖目录
+bms-frontend/node_modules/
+
+# 构建输出
+bms-frontend/dist/
+bms-frontend/dist-ssr/
+
+# 本地环境文件（可选，如果包含敏感信息）
+# bms-frontend/.env.local
+# bms-frontend/.env.*.local
+
+# 测试覆盖率
+bms-frontend/coverage/
+
+# ==================== BMAD 相关 ====================
+
+# BMAD 缓存（如果有）
+_bmad-cache/
+
+# ==================== 其他 ====================
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# 压缩文件
+*.zip
+*.tar
+*.tar.gz
+*.rar

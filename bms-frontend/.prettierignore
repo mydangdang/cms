@@ -1,0 +1,8 @@
+dist
+dist-ssr
+node_modules
+coverage
+*.local
+.vscode
+.idea
+*.log
