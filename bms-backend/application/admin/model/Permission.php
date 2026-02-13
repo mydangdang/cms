@@ -348,44 +348,29 @@ class Permission extends Model
     }
 
     /**
-     * 所有的API接口权限 (扁平化列表)
-     * 缓存 key ALL_API_PERMISSIONS
-     * @return array
-    */
-
-    public function getAllApiPermissions()
-    { 
-        $cacheKey    = 'ALL_API_PERMISSIONS';
-        $cacheExpire = 30 * 24 * 60 * 60; // 30天
-
-        // 尝试从缓存获取
-        $permissions = Cache::get($cacheKey);
-        if ($permissions && is_array($permissions) && count($permissions) > 0) {
-            return $permissions;
-        }
-
-        // 查询所有API接口权限
-        $permissionsList = $this->where('type', 4) // 4 表示 API 接口权限
+     * 批量清除所有管理员的权限缓存
+     * 权限变更后调用，确保所有管理员获取最新权限
+     *
+     * @return int 清除的缓存数量
+     */
+    public function clearAllPermissionCache()
+    {
+        // 查询所有正常状态的管理员
+        $admins = \think\Db::name('admins')
             ->where('status', 1)
-            ->where('is_hidden', 0)
             ->where('deleted_at', 0)
-            ->field('code')
-            ->order('sort_order ASC, permission_id ASC')
+            ->field('admin_id')
             ->select();
-        if (!$permissionsList) {
-            return array();
-        }
-        $permissions = array();
-        foreach ($permissionsList as $item) {
-            if($item['code']){
-                $permissions[] = $item['code'];
+
+        $count = 0;
+        if ($admins) {
+            foreach ($admins as $admin) {
+                $this->clearPermissionCache($admin['admin_id']);
+                $count++;
             }
         }
 
-        // 缓存结果
-        Cache::set($cacheKey, $permissions, $cacheExpire);
-
-        return $permissions;
+        return $count;
     }
 
     /**
@@ -428,18 +413,6 @@ class Permission extends Model
                 $this->extractCodesRecursive($permission['children'], $codes);
             }
         }
-    }
-
-    /**
-     * 清理所有API接口权限缓存
-     * 缓存 key ALL_API_PERMISSIONS
-     * 编辑/删除按钮权限时自动清除
-     * @return bool
-    */
-    public function clearAllApiPermissionsCache()
-    {
-        $cacheKey = 'ALL_API_PERMISSIONS';
-        return Cache::rm($cacheKey);
     }
 
 }

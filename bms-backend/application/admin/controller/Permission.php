@@ -138,8 +138,8 @@ class Permission extends Base
         $result = $permissionModel->add($data);
 
         if ($result) {
-            // 清除全局 API 权限缓存
-            $permissionModel->clearAllApiPermissionsCache();
+            // 清除所有管理员的权限缓存
+            $permissionModel->clearAllPermissionCache();
             $this->apiReturn(200, '添加成功', array('permission_id' => $result));
         } else {
             $this->apiReturn(400, '添加失败');
@@ -236,8 +236,8 @@ class Permission extends Base
         $result = $permissionModel->edit($permissionId, $data);
 
         if ($result) {
-            // 清除全局 API 权限缓存
-            $permissionModel->clearAllApiPermissionsCache();
+            // 清除所有管理员的权限缓存
+            $permissionModel->clearAllPermissionCache();
             $this->apiReturn(200, '编辑成功');
         } else {
             $this->apiReturn(400, '编辑失败');
@@ -278,8 +278,8 @@ class Permission extends Base
         $result = $permissionModel->remove($permissionId);
 
         if ($result) {
-            // 清除全局 API 权限缓存
-            $permissionModel->clearAllApiPermissionsCache();
+            // 清除所有管理员的权限缓存
+            $permissionModel->clearAllPermissionCache();
             $this->apiReturn(200, '删除成功');
         } else {
             $this->apiReturn(400, '删除失败');
