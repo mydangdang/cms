@@ -15,8 +15,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ========================================
 -- 数据库创建（可选，根据需要启用）
 -- ========================================
--- CREATE DATABASE IF NOT EXISTS `bms_item` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
--- USE `bms_item`;
+-- CREATE DATABASE IF NOT EXISTS `cms_101` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+-- USE `cms_101`;
 
 -- ========================================
 -- 1. 管理员表 (bms_admins)
@@ -255,7 +255,7 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order
 
 -- 2.4 权限菜单管理
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(3, '权限菜单管理', 'system:permission', 2, 'system/permission', 'views/system/PermissionList.vue', 'Lock', 30, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+(3, '权限菜单管理', 'system:permission', 2, '/system/permission', 'views/system/PermissionList.vue', 'Lock', 30, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 权限菜单按钮权限
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
@@ -271,7 +271,7 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order
 
 -- 2.5 系统配置
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(3, '系统配置', 'system:config', 2, 'system/config', 'views/system/Config.vue', 'Discount', 40, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+(3, '系统配置', 'system:config', 2, '/system/config', 'views/system/Config.vue', 'Discount', 40, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 系统配置按钮权限
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
@@ -287,7 +287,7 @@ INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order
 
 -- 2.6 定时任务
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `path`, `component`, `icon`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES
-(3, '定时任务', 'system:crontab', 2, 'system/crontab', 'views/system/CrontabList.vue', 'Clock', 50, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
+(3, '定时任务', 'system:crontab', 2, '/system/crontab', 'views/system/CrontabList.vue', 'Clock', 50, 1, UNIX_TIMESTAMP(), UNIX_TIMESTAMP());
 
 -- 定时任务按钮权限
 INSERT INTO `bms_permissions` (`parent_id`, `title`, `code`, `type`, `sort_order`, `status`, `created_at`, `updated_at`) VALUES

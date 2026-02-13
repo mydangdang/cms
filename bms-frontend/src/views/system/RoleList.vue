@@ -43,7 +43,7 @@
         <el-table-column label="操作" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" plain size="small" v-permission="'system:role:edit'" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="warning" plain size="small" v-permission="'system:role:assign'" @click="handlePermission(row)">权限</el-button>
+            <el-button type="warning" plain size="small" v-permission="'system:role:assignpermission'" @click="handlePermission(row)">权限</el-button>
             <el-button type="danger" plain size="small" v-permission="'system:role:delete'" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>

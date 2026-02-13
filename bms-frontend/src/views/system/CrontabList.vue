@@ -62,7 +62,7 @@
           <template #default="{ row }">
             <el-button type="primary" plain size="small" v-permission="'system:crontab:edit'" @click="handleEdit(row)">编辑</el-button>
             <el-button type="danger" plain size="small" v-permission="'system:crontab:delete'" @click="handleDelete(row)">删除</el-button>
-            <el-button type="success" plain size="small" v-permission="'system:crontab:logs'" @click="handleLogs(row)">记录</el-button>
+            <el-button type="success" plain size="small" v-permission="'system:crontab:getlogs'" @click="handleLogs(row)">记录</el-button>
             <el-button type="info" plain size="small" v-permission="'system:crontab:execute'" @click="handleExecute(row)">执行</el-button>
           </template>
         </el-table-column>
