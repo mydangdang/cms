@@ -179,6 +179,8 @@ router.beforeEach(async (to, _from, next) => {
   if (token && !permissionStore.loaded) {
     try {
       await loadDynamicRoutes()
+      // 设置当前激活的顶级目录
+      permissionStore.setActiveTopMenuByPath(to.path)
       // 只有当路由还未匹配时才重新导航，避免重复挂载组件
       if (to.matched.length === 0) {
         next({ ...to, replace: true })
@@ -200,6 +202,8 @@ router.beforeEach(async (to, _from, next) => {
   if (!isStaticRoute && token && isSystemRoute && to.matched.length === 0) {
     try {
       await loadDynamicRoutes()
+      // 设置当前激活的顶级目录
+      permissionStore.setActiveTopMenuByPath(to.path)
       // 路由注册完成后，只有当路由仍未匹配时才重新导航
       if (to.matched.length === 0) {
         next({ ...to, replace: true })

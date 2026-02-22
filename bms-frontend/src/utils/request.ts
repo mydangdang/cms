@@ -68,6 +68,16 @@ instance.interceptors.response.use(
       // 成功响应统一返回数据，不在此处显示消息提示
       // 具体操作（删除、编辑等）的成功提示由前端页面组件自行处理
       return data
+    } else if (data.code === 401) {
+      // Token 无效或已过期，清空缓存并跳转登录页
+      ElMessage.error(data.msg || 'Token 无效或已过期，请重新登录')
+      localStorage.removeItem('token')
+      localStorage.removeItem('adminInfo')
+      // 跳转到登录页（使用 window.location 避免路由循环依赖）
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login'
+      }
+      return Promise.reject(new Error(data.msg || 'Token 无效或已过期'))
     } else {
       ElMessage.error(data.msg || '请求失败')
       return Promise.reject(new Error(data.msg || '请求失败'))

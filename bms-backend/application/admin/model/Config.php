@@ -11,6 +11,16 @@ use think\Cache;
 class Config extends Model
 {
     /**
+     * 全局配置缓存键
+     */
+    const CACHE_KEY_ALL = 'SYSTEM_DB_CONFIG';
+
+    /**
+     * 分组配置缓存键
+     */
+    const CACHE_KEY_GROUPED = 'config:grouped';
+
+    /**
      * 表名
      * @var string
      */
@@ -59,8 +69,7 @@ class Config extends Model
     public function getGroupedList($where = array())
     {
         // 先尝试从缓存获取
-        $cacheKey = 'config:grouped';
-        $cached = Cache::get($cacheKey);
+        $cached = Cache::get(self::CACHE_KEY_GROUPED);
         if ($cached !== false) {
             return $cached;
         }
@@ -82,7 +91,7 @@ class Config extends Model
         }
 
         // 缓存结果
-        Cache::set($cacheKey, $grouped, $this->cacheExpire);
+        Cache::set(self::CACHE_KEY_GROUPED, $grouped, $this->cacheExpire);
 
         return $grouped;
     }
@@ -218,12 +227,16 @@ class Config extends Model
 
     /**
      * 清除配置缓存
-     * 删除系统配置缓存 SYSTEM_DB_CONFIG
+     * 删除系统配置缓存和分组缓存
      * @return bool
      */
     public function clearConfigCache()
     {
-        return Cache::rm('SYSTEM_DB_CONFIG');
+        // 清除全局配置缓存
+        $result1 = Cache::rm(self::CACHE_KEY_ALL);
+        // 清除分组配置缓存
+        $result2 = Cache::rm(self::CACHE_KEY_GROUPED);
+        return $result1 && $result2;
     }
 
     /**

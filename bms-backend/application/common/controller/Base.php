@@ -31,18 +31,16 @@ class Base extends Controller
     /**
      * 加载系统配置缓存
      * 从缓存中读取配置，如果缓存不存在则从数据库读取并缓存
-     * 缓存键：SYSTEM_DB_CONFIG
      * 缓存时间：30天
      *
      * @return void
      */
     protected function configCache()
     {
-        $cacheKey = 'SYSTEM_DB_CONFIG';
         $cacheExpire = 30 * 24 * 60 * 60; // 30天
 
         // 尝试从缓存获取
-        $config = Cache::get($cacheKey);
+        $config = Cache::get(\app\admin\model\Config::CACHE_KEY_ALL);
 
         if ($config !== false) {
             // 使用缓存数据
@@ -111,7 +109,7 @@ class Base extends Controller
         }
 
         // 写入缓存（30天）
-        Cache::set($cacheKey, $config, $cacheExpire);
+        Cache::set(\app\admin\model\Config::CACHE_KEY_ALL, $config, $cacheExpire);
 
         // 设置到全局配置
         \think\Config::set($config);

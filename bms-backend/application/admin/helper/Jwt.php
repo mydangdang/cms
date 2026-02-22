@@ -18,16 +18,21 @@ if (class_exists('app\admin\helper\Jwt', false)) {
 class Jwt
 {
     /**
-     * JWT 配置
+     * 获取 JWT 配置
+     * 优先从 config.php 读取，使用默认值作为回退
      *
-     * @var array
+     * @return array
      */
-    protected static $config = array(
-        'algorithm' => 'HS256',
-        'expire' => 86400, // 24 小时（AC 要求）
-        'issuer' => 'bms-system',
-        'audience' => 'bms-admin'
-    );
+    protected static function getConfig()
+    {
+        $config = \think\Config::get('jwt');
+        return array(
+            'algorithm' => isset($config['algorithm']) ? $config['algorithm'] : 'HS256',
+            'expire' => isset($config['expire']) ? (int)$config['expire'] : 7200,
+            'issuer' => isset($config['issuer']) ? $config['issuer'] : 'bms-system',
+            'audience' => isset($config['audience']) ? $config['audience'] : 'bms-admin'
+        );
+    }
 
     /**
      * 生成 JWT Token
@@ -39,12 +44,13 @@ class Jwt
      */
     public static function encode($adminId, $username, $isSuper = 0)
     {
+        $config = self::getConfig();
         $now = time();
-        $expire = $now + self::$config['expire'];
+        $expire = $now + $config['expire'];
 
         $payload = array(
-            'iss' => self::$config['issuer'],
-            'aud' => self::$config['audience'],
+            'iss' => $config['issuer'],
+            'aud' => $config['audience'],
             'iat' => $now,
             'exp' => $expire,
             'data' => array(
@@ -54,7 +60,7 @@ class Jwt
             )
         );
 
-        return FirebaseJWT::encode($payload, self::getSecretKey(), self::$config['algorithm']);
+        return FirebaseJWT::encode($payload, self::getSecretKey(), $config['algorithm']);
     }
 
     /**
@@ -65,8 +71,9 @@ class Jwt
      */
     public static function decode($token)
     {
+        $config = self::getConfig();
         try {
-            $decoded = FirebaseJWT::decode($token, self::getSecretKey(), array(self::$config['algorithm']));
+            $decoded = FirebaseJWT::decode($token, self::getSecretKey(), array($config['algorithm']));
             return (array)$decoded;
         } catch (\Exception $e) {
             return false;
@@ -124,6 +131,7 @@ class Jwt
      */
     public static function getExpireTime()
     {
-        return self::$config['expire'];
+        $config = self::getConfig();
+        return $config['expire'];
     }
 }

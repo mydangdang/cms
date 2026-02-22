@@ -1,7 +1,18 @@
 <template>
   <div class="header">
     <div class="header-left">
-      <!-- 系统标题已移除 -->
+      <!-- 顶级目录菜单 -->
+      <div class="top-menu">
+        <div
+          v-for="menu in permissionStore.topMenus"
+          :key="menu.permission_id"
+          class="top-menu-item"
+          :class="{ 'is-active': permissionStore.activeTopMenuId === menu.permission_id }"
+          @click="handleTopMenuClick(menu)"
+        >
+          <span>{{ menu.title }}</span>
+        </div>
+      </div>
     </div>
 
     <div class="header-right">
@@ -68,15 +79,60 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessageBox, ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { User, SwitchButton, Setting } from '@element-plus/icons-vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useAdminStore } from '@/store/modules/admin'
+import { usePermissionStore } from '@/store/modules/permission'
 import { editAdmin, type Admin } from '@/api/admin'
+import { loadDynamicRoutes } from '@/router'
+import type { Permission } from '@/api/permission'
 
 const router = useRouter()
+const route = useRoute()
 const adminStore = useAdminStore()
+const permissionStore = usePermissionStore()
+
+/**
+ * 处理顶级目录点击
+ * 点击后导航到该目录下的第一个菜单
+ */
+const handleTopMenuClick = async (menu: Permission) => {
+  if (!menu.permission_id) return
+
+  // 设置当前激活的顶级目录
+  permissionStore.setActiveTopMenu(menu.permission_id)
+
+  // 获取第一个可用菜单路径
+  const firstPath = permissionStore.getFirstMenuPath(menu.permission_id)
+
+  if (firstPath) {
+    // 确保权限和路由已加载
+    if (!permissionStore.loaded) {
+      await permissionStore.loadPermissions()
+      await loadDynamicRoutes()
+    }
+
+    // 导航到第一个菜单
+    router.push(firstPath).catch((err) => {
+      console.error('Router push error:', err)
+    })
+  }
+}
+
+/**
+ * 监听权限加载完成，设置激活的顶级目录
+ */
+watch(
+  () => permissionStore.loaded,
+  (loaded) => {
+    if (loaded && route.path) {
+      permissionStore.setActiveTopMenuByPath(route.path)
+    }
+  },
+  { immediate: true }
+)
 
 // 弹窗状态
 const dialogVisible = ref(false)
@@ -232,6 +288,41 @@ const handleSubmit = async () => {
 .header-left {
   display: flex;
   align-items: center;
+  flex: 1;
+}
+
+.top-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.top-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  padding: 0 15px;
+  margin-left: 10px;
+  color: #bfcbd9;
+  cursor: pointer;
+  border-radius: 0;
+  transition: all 0.3s;
+  font-size: 14px;
+}
+
+.top-menu-item:hover {
+  background-color: #425268;
+  color: #fff;
+}
+
+.top-menu-item.is-active {
+  background-color: #1c887b;
+  color: #fff;
+}
+
+.top-menu-item .el-icon {
+  font-size: 16px;
 }
 
 .header-right {

@@ -14,6 +14,13 @@ namespace app\admin\controller;
 class Captcha extends Base
 {
     /**
+     * 整个控制器不需要认证
+     *
+     * @var bool
+     */
+    protected $needAuth = false;
+
+    /**
      * 模型实例
      * @var \app\admin\model\Captcha
      */

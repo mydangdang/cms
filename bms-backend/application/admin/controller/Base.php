@@ -13,27 +13,20 @@ use app\common\controller\Base as CommonBase;
 class Base extends CommonBase
 {
     /**
-     * 允许的源域名列表
-     * 注意：此 CORS 处理为手工添加，后续审查时请勿移除
+     * 是否需要认证
+     * 子控制器可设置 $needAuth = false 跳过整个控制器的认证
+     *
+     * @var bool
+     */
+    protected $needAuth = true;
+
+    /**
+     * 不需要认证的方法列表
+     * 子控制器可设置 $noAuthMethods = array('method1', 'method2') 跳过特定方法的认证
      *
      * @var array
      */
-    protected $allowedOrigins = array(
-        'http://127.0.0.1:5173',
-        'http://localhost:5173',
-        'http://127.0.0.1:5174',
-        'http://localhost:5174',
-    );
-
-    /**
-     * Token验证白名单
-     * 注意：此处未不需要登录的jwt白名单（也不会将管理员信息注入到请求对象）
-     * 注意：logout 需要 Token 验证以获取 admin_id 来清除权限缓存
-    */
-    protected $tokenWhiteList = array(
-        'admin/login/submit',   // 登录接口无需 Token 验证
-        'admin/captcha/index',  // 验证码接口无需 Token 验证
-    );
+    protected $noAuthMethods = array();
 
     public function __construct()
     {
@@ -53,15 +46,23 @@ class Base extends CommonBase
      */
     protected function handleCors()
     {
+        // 从配置文件读取 CORS 配置
+        $corsConfig = config('cors');
+        $allowedOrigins = isset($corsConfig['allowed_origins']) ? $corsConfig['allowed_origins'] : array();
+
         $origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
 
-        if (in_array($origin, $this->allowedOrigins)) {
+        if (in_array($origin, $allowedOrigins)) {
             if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+                $allowedMethods = isset($corsConfig['allowed_methods']) ? $corsConfig['allowed_methods'] : 'GET, POST, PUT, DELETE, OPTIONS';
+                $allowedHeaders = isset($corsConfig['allowed_headers']) ? $corsConfig['allowed_headers'] : 'Origin, Content-Type, Authorization, X-Requested-With';
+                $maxAge = isset($corsConfig['max_age']) ? $corsConfig['max_age'] : 86400;
+
                 header("Access-Control-Allow-Origin: $origin");
-                header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-                header("Access-Control-Allow-Headers: Origin, Content-Type, Authorization, X-Requested-With");
+                header("Access-Control-Allow-Methods: $allowedMethods");
+                header("Access-Control-Allow-Headers: $allowedHeaders");
                 header("Access-Control-Allow-Credentials: true");
-                header("Access-Control-Max-Age: 86400");
+                header("Access-Control-Max-Age: $maxAge");
                 header("HTTP/1.1 200 OK");
                 exit;
             }
@@ -76,21 +77,25 @@ class Base extends CommonBase
      *
      * Story 1.4: Token 验证功能
      * Token 验证在此控制器中实现，使用 Jwt helper 解析和验证 JWT Token
-     * 白名单路由无需 Token 验证
+     *
+     * 认证控制方式：
+     * 1. 子控制器设置 $needAuth = false 跳过整个控制器的认证
+     * 2. 子控制器设置 $noAuthMethods = array('method') 跳过特定方法的认证
      *
      * @return void
      */
     protected function checkAuth()
     {
-        // 获取当前路由
-        $module     = request()->module();
-        $controller = request()->controller();
-        $action     = request()->action();
-        $route      = strtolower($module . '/' . $controller . '/' . $action);
+        // 检查是否需要认证
+        if (!$this->needAuth) {
+            return;
+        }
 
-        // 白名单路由（无需 Token 验证）
-        // 检查是否在白名单中
-        if (in_array($route, $this->tokenWhiteList)) {
+        // 获取当前方法
+        $action = strtolower(request()->action());
+
+        // 检查当前方法是否在不需要认证的列表中
+        if (in_array($action, $this->noAuthMethods)) {
             return;
         }
 
@@ -99,11 +104,17 @@ class Base extends CommonBase
         if (empty($token)) {
             $this->apiReturn(401, '未提供认证令牌');
         }
+
         // 验证 Token
         $adminInfo = \app\admin\helper\Jwt::getAdminInfo($token);
         if ($adminInfo === false) {
             $this->apiReturn(401, 'Token 无效或已过期，请重新登录');
         }
+
+        // 获取当前路由
+        $module     = request()->module();
+        $controller = request()->controller();
+        $route      = strtolower($module . '/' . $controller . '/' . $action);
 
         // 验证API权限
         $permissionModel = model('Permission');
@@ -112,7 +123,7 @@ class Base extends CommonBase
         // 系统已配置的需要验证的权限
         $apiAllPermissions = $permissionModel->getAllApiPermissions();
         // 如果route在系统已配置的需要验证的权限中，但用户没有该权限，则拒绝访问(超级管理员不受权限限制)
-        if ( !$adminInfo['is_super'] && in_array($route, $apiAllPermissions) && !in_array($route, $userPermissions)) {
+        if (!$adminInfo['is_super'] && in_array($route, $apiAllPermissions) && !in_array($route, $userPermissions)) {
             $this->apiReturn(403, '无权限访问该接口');
         }
 

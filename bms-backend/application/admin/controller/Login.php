@@ -17,6 +17,14 @@ use think\Request;
 class Login extends Base
 {
     /**
+     * 不需要认证的方法列表
+     * submit 方法不需要 Token 验证
+     *
+     * @var array
+     */
+    protected $noAuthMethods = array('submit');
+
+    /**
      * 登录提交
      * POST /admin/login/submit
      *

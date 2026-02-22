@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import type { Permission, PermissionType } from '@/api/permission'
 import { getUserPermissions } from '@/api/permission'
 
@@ -49,6 +49,30 @@ export const usePermissionStore = defineStore('permission', () => {
    * 用于避免并发请求和等待正在进行的加载完成
    */
   let loadPromise: Promise<void> | null = null
+
+  /**
+   * 当前激活的顶级目录ID
+   * 用于顶部导航栏和侧边栏联动
+   */
+  const activeTopMenuId = ref<number | null>(null)
+
+  /**
+   * 获取顶级目录菜单列表 (type=1)
+   */
+  const topMenus = computed(() => {
+    return menus.value.filter((m) => m.type === 1)
+  })
+
+  /**
+   * 获取当前顶级目录下的子菜单 (二级和三级)
+   */
+  const sidebarMenus = computed(() => {
+    if (!activeTopMenuId.value) {
+      return []
+    }
+    const topMenu = menus.value.find((m) => m.permission_id === activeTopMenuId.value)
+    return topMenu?.children || []
+  })
 
   // ========== Actions ==========
 
@@ -203,6 +227,93 @@ export const usePermissionStore = defineStore('permission', () => {
     buttonCodes.value = []
     apiCodes.value = []
     loaded.value = false
+    activeTopMenuId.value = null
+  }
+
+  /**
+   * 设置当前激活的顶级目录
+   */
+  const setActiveTopMenu = (menuId: number) => {
+    activeTopMenuId.value = menuId
+  }
+
+  /**
+   * 根据当前路由路径，找到对应的顶级目录并设置
+   */
+  const setActiveTopMenuByPath = (path: string) => {
+    // 递归查找路径所属的顶级菜单
+    const findTopMenuByPath = (menus: Permission[], targetPath: string): number | null => {
+      for (const menu of menus) {
+        // 检查当前菜单是否匹配
+        if (menu.path === targetPath) {
+          // 找到匹配，返回顶级菜单ID（一级菜单）
+          return menu.permission_id
+        }
+        // 检查子菜单
+        if (menu.children && menu.children.length > 0) {
+          // 递归检查子菜单
+          const found = findTopMenuInChildren(menu.children, targetPath, menu.permission_id)
+          if (found !== null) {
+            return found
+          }
+        }
+      }
+      return null
+    }
+
+    // 辅助函数：在子菜单中查找，返回顶级菜单ID
+    const findTopMenuInChildren = (
+      children: Permission[],
+      targetPath: string,
+      topMenuId: number
+    ): number | null => {
+      for (const child of children) {
+        if (child.path === targetPath) {
+          return topMenuId
+        }
+        if (child.children && child.children.length > 0) {
+          const found = findTopMenuInChildren(child.children, targetPath, topMenuId)
+          if (found !== null) {
+            return found
+          }
+        }
+      }
+      return null
+    }
+
+    const topId = findTopMenuByPath(menus.value, path)
+    if (topId !== null) {
+      activeTopMenuId.value = topId
+    }
+  }
+
+  /**
+   * 获取顶级目录下的第一个可用菜单路径
+   * 如果第一个二级是菜单，返回其路径
+   * 如果第一个二级是目录，返回其第一个三级菜单路径
+   */
+  const getFirstMenuPath = (menuId: number): string | null => {
+    const topMenu = menus.value.find((m) => m.permission_id === menuId)
+    if (!topMenu || !topMenu.children || topMenu.children.length === 0) {
+      return null
+    }
+
+    const firstChild = topMenu.children[0]
+
+    // 如果第一个子菜单是菜单类型(type=2)，直接返回
+    if (firstChild.type === 2 && firstChild.path) {
+      return firstChild.path
+    }
+
+    // 如果第一个子菜单是目录类型(type=1)，找其第一个菜单
+    if (firstChild.type === 1 && firstChild.children && firstChild.children.length > 0) {
+      const firstGrandChild = firstChild.children[0]
+      if (firstGrandChild.type === 2 && firstGrandChild.path) {
+        return firstGrandChild.path
+      }
+    }
+
+    return null
   }
 
   /**
@@ -237,6 +348,10 @@ export const usePermissionStore = defineStore('permission', () => {
     apiCodes,
     loaded,
     loading,
+    activeTopMenuId,
+    // Computed
+    topMenus,
+    sidebarMenus,
     // Actions
     loadPermissions,
     parsePermissions,
@@ -244,6 +359,9 @@ export const usePermissionStore = defineStore('permission', () => {
     hasAnyPermission,
     hasAllPermissions,
     clearPermissions,
-    clearDynamicRoutes
+    clearDynamicRoutes,
+    setActiveTopMenu,
+    setActiveTopMenuByPath,
+    getFirstMenuPath
   }
 })

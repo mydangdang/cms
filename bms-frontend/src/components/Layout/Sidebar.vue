@@ -1,15 +1,19 @@
 <template>
   <div class="sidebar" :class="{ 'is-collapsed': isCollapsed }">
-    <!-- 折叠按钮和网站标题 -->
-    <div class="sidebar__toggle" @click="toggleCollapse">
-      <span class="website-title">BMS 后台管理系统</span>
-      <el-icon class="toggle-icon">
-        <component :is="isCollapsed ? Expand : Fold" />
-      </el-icon>
+    <!-- 系统标题 + 当前顶级目录 -->
+    <div class="sidebar__header">
+      <div class="header-top">
+        <span class="system-title" v-show="!isCollapsed">BMS 后台管理系统</span>
+        <el-icon class="toggle-icon" @click="toggleCollapse">
+          <component :is="isCollapsed ? Expand : Fold" />
+        </el-icon>
+      </div>
+      <div class="header-sub" v-show="!isCollapsed">{{ currentTopMenuTitle }}</div>
     </div>
 
     <!-- 菜单 -->
     <el-menu
+      v-if="sidebarMenus.length > 0"
       key="menu"
       :default-active="activeMenu"
       :default-openeds="defaultOpenedMenus"
@@ -20,9 +24,12 @@
       text-color="#bfcbd9"
       active-text-color="#409EFF"
     >
-      <template v-for="menu in menuTree" :key="menu.permission_id">
-        <!-- 目录类型 (有子菜单) -->
-        <el-sub-menu v-if="menu.children && menu.children.length > 0" :index="String(menu.permission_id)">
+      <!-- 二级目录（有子菜单）- 可折叠 -->
+      <template v-for="menu in sidebarMenus" :key="menu.permission_id">
+        <el-sub-menu
+          v-if="menu.children && menu.children.length > 0"
+          :index="String(menu.permission_id)"
+        >
           <template #title>
             <el-icon v-if="menu.icon">
               <component :is="getIcon(menu.icon)" />
@@ -30,46 +37,21 @@
             <span>{{ menu.title }}</span>
           </template>
 
-          <!-- 子菜单 -->
-          <template v-for="subMenu in menu.children" :key="subMenu.permission_id">
-            <el-menu-item
-              v-if="subMenu.type === 2"
-              :index="subMenu.path"
-              @click="handleMenuClick(subMenu)"
-            >
-              <el-icon v-if="subMenu.icon">
-                <component :is="getIcon(subMenu.icon)" />
-              </el-icon>
-              <span>{{ subMenu.title }}</span>
-            </el-menu-item>
-
-            <!-- 三级目录（如果有） -->
-            <el-sub-menu
-              v-else-if="subMenu.children && subMenu.children.length > 0"
-              :index="String(subMenu.permission_id)"
-            >
-              <template #title>
-                <el-icon v-if="subMenu.icon">
-                  <component :is="getIcon(subMenu.icon)" />
-                </el-icon>
-                <span>{{ subMenu.title }}</span>
-              </template>
-
-              <el-menu-item
-                v-for="child in subMenu.children"
-                :key="child.permission_id"
-                :index="child.path"
-              >
-                <el-icon v-if="child.icon">
-                  <component :is="getIcon(child.icon)" />
-                </el-icon>
-                <span>{{ child.title }}</span>
-              </el-menu-item>
-            </el-sub-menu>
-          </template>
+          <!-- 三级菜单 -->
+          <el-menu-item
+            v-for="child in menu.children"
+            :key="child.permission_id"
+            :index="child.path"
+            @click="handleMenuClick(child)"
+          >
+            <el-icon v-if="child.icon">
+              <component :is="getIcon(child.icon)" />
+            </el-icon>
+            <span>{{ child.title }}</span>
+          </el-menu-item>
         </el-sub-menu>
 
-        <!-- 菜单类型 (无子菜单) -->
+        <!-- 二级菜单（无子菜单）- 直接点击 -->
         <el-menu-item
           v-else-if="menu.type === 2"
           :index="menu.path"
@@ -82,11 +64,16 @@
         </el-menu-item>
       </template>
     </el-menu>
+
+    <!-- 空状态提示 -->
+    <div v-else class="sidebar-empty">
+      <span v-show="!isCollapsed">请选择顶部菜单</span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Expand, Fold } from '@element-plus/icons-vue'
 import { usePermissionStore } from '@/store/modules/permission'
@@ -96,14 +83,11 @@ import { loadDynamicRoutes } from '@/router'
 
 /**
  * 侧边栏菜单组件
- * Story 2.6: 动态菜单生成
  *
  * 功能：
- * - 根据用户权限动态生成菜单
- * - 只显示 type=1（目录）和 type=2（菜单）的权限
+ * - 显示当前选中顶级目录下的二级和三级菜单
+ * - 二级菜单如果有子菜单则可折叠
  * - 支持折叠/展开
- * - 支持多级菜单
- * - 使用 Element Plus 内置路由导航
  */
 
 const router = useRouter()
@@ -116,6 +100,19 @@ const isCollapsed = ref(false)
 // 当前激活的菜单
 const activeMenu = computed(() => route.path)
 
+// 当前顶级菜单标题（如果没有选中则显示默认提示）
+const currentTopMenuTitle = computed(() => {
+  const topMenu = permissionStore.topMenus.find(
+    (m) => m.permission_id === permissionStore.activeTopMenuId
+  )
+  return topMenu?.title || '请选择菜单'
+})
+
+// 侧边栏菜单（二级和三级）
+const sidebarMenus = computed(() => {
+  return permissionStore.sidebarMenus
+})
+
 // 默认展开的菜单（根据当前路由匹配）
 const defaultOpenedMenus = computed(() => {
   const currentPath = route.path
@@ -125,7 +122,7 @@ const defaultOpenedMenus = computed(() => {
   const findParentMenu = (menus: Permission[], path: string): string | null => {
     for (const menu of menus) {
       if (menu.path === path) {
-        return null // 找到了，这是叶子节点，返回 null
+        return null // 找到了，这是叶子节点
       }
       if (menu.children && menu.children.length > 0) {
         const found = findParentMenu(menu.children, path)
@@ -137,7 +134,7 @@ const defaultOpenedMenus = computed(() => {
     return null
   }
 
-  const parentId = findParentMenu(permissionStore.menus, currentPath)
+  const parentId = findParentMenu(sidebarMenus.value, currentPath)
   if (parentId) {
     opened.push(parentId)
   }
@@ -145,11 +142,26 @@ const defaultOpenedMenus = computed(() => {
   return opened
 })
 
-// 菜单树（只包含 type=1 和 type=2）
-const menuTree = computed(() => {
-  // permissionStore.menus 已经是树形结构，直接返回
-  return permissionStore.menus
-})
+// 监听路由变化，更新激活的顶级目录
+watch(
+  () => route.path,
+  (newPath) => {
+    if (permissionStore.loaded) {
+      permissionStore.setActiveTopMenuByPath(newPath)
+    }
+  },
+  { immediate: true }
+)
+
+// 监听权限加载完成，初始化激活的顶级目录
+watch(
+  () => permissionStore.loaded,
+  (loaded) => {
+    if (loaded && route.path) {
+      permissionStore.setActiveTopMenuByPath(route.path)
+    }
+  }
+)
 
 /**
  * 获取图标组件
@@ -180,7 +192,7 @@ const handleMenuClick = async (menu: Permission) => {
   }
 
   // 导航到目标页面
-  router.push(menu.path).catch(err => {
+  router.push(menu.path).catch((err) => {
     console.error('Router push error:', err)
   })
 }
@@ -198,7 +210,8 @@ const handleMenuClick = async (menu: Permission) => {
   &.is-collapsed {
     width: 64px;
 
-    .website-title {
+    .system-title,
+    .header-sub {
       display: none;
     }
 
@@ -210,55 +223,78 @@ const handleMenuClick = async (menu: Permission) => {
     }
   }
 
-  &__toggle {
+  &__header {
     position: relative;
-    display: flex;
-    align-items: center;
-    height: 50px;
     padding: 0 20px;
-    color: #bfcbd9;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    color: #fff;
+    background-color: #1b2c41;
+    border-bottom: 1px solid #152238;
 
-    &:hover {
-      background-color: #263445;
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 50px;
     }
 
-    .website-title {
+    .system-title {
       flex: 1;
-      color: #fff;
-      font-size: 18px;
-      font-weight: 500;
+      font-size: 16px;
+      font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .toggle-icon {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
       font-size: 18px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background-color 0.3s;
+
+      &:hover {
+        background-color: #425268;
+      }
 
       .el-icon {
         font-size: 18px;
       }
     }
+
+    .header-sub {
+      padding: 8px 0 12px;
+      font-size: 13px;
+      color: #909399;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-top: 1px solid #2d3e53;
+    }
   }
 
-  // 第一大类菜单 (type=1 目录) - 一级分类
+  .sidebar-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100px;
+    color: #909399;
+    font-size: 14px;
+  }
+
+  // 二级目录菜单（可折叠）
   :deep(.el-sub-menu__title) {
-    background-color: #1b2c41 !important;
+    background-color: #2d3e53 !important;
     color: #bfcbd9 !important;
     margin-bottom: 1px;
 
     &:hover {
-      background-color: #1c2e45 !important;
+      background-color: #1c887b !important;
+      color: #fff !important;
     }
   }
 
-  // 第二大类菜单 (type=2 菜单) - 激活背景色
+  // 菜单项
   :deep(.el-menu-item) {
     background-color: #2d3e53 !important;
     color: #bfcbd9 !important;
@@ -275,10 +311,11 @@ const handleMenuClick = async (menu: Permission) => {
     }
   }
 
-  // 子菜单背景 - 激活背景色
+  // 子菜单背景
   :deep(.el-menu--inline .el-menu-item) {
-    background-color: #2d3e53 !important;
+    background-color: #1b2c41 !important;
     color: #bfcbd9 !important;
+    padding-left: 50px !important;
 
     &:hover {
       background-color: #1c887b !important;
