@@ -124,7 +124,7 @@
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="图标" v-if="formData.type === 2">
+            <el-form-item label="图标" v-if="[1, 2].includes(formData.type)">
               <el-input v-model="formData.icon" placeholder="请输入图标名称">
                 <template #append>
                   <el-icon><component :is="formData.icon || 'QuestionFilled'" /></el-icon>

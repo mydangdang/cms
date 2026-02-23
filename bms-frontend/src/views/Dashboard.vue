@@ -22,19 +22,6 @@
             </el-tag>
           </el-descriptions-item>
         </el-descriptions>
-
-        <div class="system-info">
-          <h3>系统信息</h3>
-          <p>Epic 1: 用户认证与系统访问 - 已完成</p>
-          <p>当前功能状态：</p>
-          <ul>
-            <li>✅ 图形验证码</li>
-            <li>✅ 用户登录认证</li>
-            <li>✅ Token 验证中间件</li>
-            <li>✅ 登录日志记录</li>
-            <li>✅ 用户登出功能</li>
-          </ul>
-        </div>
       </div>
     </el-card>
   </div>
@@ -74,34 +61,5 @@ const adminInfo = computed(() => adminStore.adminInfo)
 
 .welcome-content {
   padding: 20px 0;
-}
-
-.system-info {
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #f5f7fa;
-  border-radius: 4px;
-}
-
-.system-info h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 18px;
-  color: #303133;
-}
-
-.system-info p {
-  margin: 10px 0;
-  color: #606266;
-}
-
-.system-info ul {
-  margin: 10px 0;
-  padding-left: 20px;
-  color: #606266;
-}
-
-.system-info li {
-  margin: 5px 0;
 }
 </style>
