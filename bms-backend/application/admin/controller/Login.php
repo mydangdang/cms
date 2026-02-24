@@ -117,12 +117,23 @@ class Login extends Base
         $adminId = $request->admin_id;
         $username = $request->username;
 
-        // 清除当前管理员的权限缓存
-        if ($adminId) {
-            $result = model('Permission')->clearPermissionCache($adminId);
+        // 将当前 Token 加入黑名单，防止登出后 Token 继续使用
+        $token = $this->getTokenFromHeader();
+        if ($token) {
+            $decodedPayload = \app\admin\helper\Jwt::decode($token);
+            if ($decodedPayload && isset($decodedPayload['exp'])) {
+                $ttl = $decodedPayload['exp'] - time();
+                if ($ttl > 0) {
+                    // 缓存有效期与 Token 剩余时间一致，过期后自动清除
+                    \think\Cache::set('token_blacklist:' . md5($token), 1, $ttl);
+                }
+            }
         }
 
-        // TODO: 如果需要实现 Token 黑名单，在此处添加逻辑
+        // 清除当前管理员的权限缓存
+        if ($adminId) {
+            model('Permission')->clearPermissionCache($adminId);
+        }
 
         $this->apiReturn(200, '登出成功');
     }

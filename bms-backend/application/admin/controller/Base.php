@@ -111,6 +111,11 @@ class Base extends CommonBase
             $this->apiReturn(401, 'Token 无效或已过期，请重新登录');
         }
 
+        // 检查 Token 是否在黑名单（已登出的 Token）
+        if (\think\Cache::get('token_blacklist:' . md5($token))) {
+            $this->apiReturn(401, 'Token 已失效，请重新登录');
+        }
+
         // 获取当前路由
         $module     = request()->module();
         $controller = request()->controller();

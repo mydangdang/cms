@@ -31,6 +31,10 @@ class Admin extends Base
         $page = $request->param('page', 1);
         $limit = $request->param('limit', 20);
 
+        // 分页参数校验，防止传入超大 limit 导致内存溢出
+        $page  = max(1, (int)$page);
+        $limit = min(200, max(1, (int)$limit));
+
         $where = array();
         $where['is_delete'] = 0;
 
@@ -54,18 +58,20 @@ class Admin extends Base
         $result = $adminModel->getList($where, $page, $limit);
         $list = $result['list'];
 
-        // 获取每个管理员的角色信息
+        // 批量获取所有管理员的角色信息（避免 N+1 查询）
+        $adminIds  = array();
+        foreach ($list as $admin) {
+            $adminIds[] = $admin['admin_id'];
+        }
+        $rolesMap = $adminModel->getRolesForAdmins($adminIds);
+
         foreach ($list as $key => $admin) {
             // 移除密码字段
             unset($admin['password']);
 
-            // 获取角色ID列表
-            $roleIds = $adminModel->getRoleIds($admin['admin_id']);
-            $admin['role_ids'] = $roleIds;
-
-            // 获取角色详情
-            $roles = $adminModel->getRoles($admin['admin_id']);
-            $admin['roles'] = $roles;
+            $adminId = $admin['admin_id'];
+            $admin['role_ids'] = isset($rolesMap[$adminId]) ? $rolesMap[$adminId]['role_ids'] : array();
+            $admin['roles']    = isset($rolesMap[$adminId]) ? $rolesMap[$adminId]['roles'] : array();
 
             $list[$key] = $admin;
         }
@@ -384,7 +390,7 @@ class Admin extends Base
             'updated_at' => time()
         );
 
-        $result = $adminModel->where('admin_id', $adminId)->update($data);
+        $result = $adminModel->changePassword($adminId, $data);
 
         if ($result !== false) {
             $this->apiReturn(200, '修改成功');

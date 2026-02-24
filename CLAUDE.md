@@ -4,11 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-# BMS 项目开发规范
+# 项目开发规范
 
-> **版本**: v1.3
-> **更新日期**: 2026-02-13
+> **版本**: v1.6
+> **更新日期**: 2026-02-24
 > **项目**: BMS 后台管理系统 (前后端分离架构)
+
+---
+
+## 全局约束
+
+> **重要**: 始终使用中文进行会话和代码注释。
 
 ## 常用命令
 
@@ -34,9 +40,9 @@ php -l path/to/file.php   # 检查 PHP 5.6 语法兼容性
 
 ### 环境配置
 
-- 前端 API 地址: `bms-frontend/.env.development` → `VITE_API_BASE_URL=http://api.bms.co`
+- 前端 API 地址: `bms-frontend/.env.development` → `VITE_API_BASE_URL=http://api.cms101.co`
 - 后端数据库: `bms-backend/application/database.php`
-- 后端 CORS 白名单: `bms-backend/application/admin/controller/Base.php` → `$allowedOrigins`
+- 后端 CORS 白名单: `bms-backend/application/admin/config.php` → `cors.allowed_origins`
 
 ---
 
@@ -62,16 +68,16 @@ php -l path/to/file.php   # 检查 PHP 5.6 语法兼容性
 ```
 Controller (控制器层)
     ↓
-Service (服务层)
-    ↓
-Model (模型层)
+Model (模型层) - 业务逻辑 + 数据访问
     ↓
 Database (数据库)
 ```
 
+> **说明**: 当前项目 Model 层承担了 Service 层职责，包含业务逻辑和数据访问。
+
 **核心原则**:
 - 严禁在 Controller 中直接操作数据库
-- 所有业务逻辑放在 Model 层 (当前项目 Model 层承担了 Service 层职责)
+- 所有业务逻辑放在 Model 层
 - 使用 `$this->apiReturn($code, $msg, $data)` 统一响应格式
 
 ### API 路由模式
@@ -174,7 +180,7 @@ WHERE created_at >= UNIX_TIMESTAMP('2026-02-05')
 FOREIGN KEY (role_id) REFERENCES bms_roles(role_id)
 ```
 
-#### 4. BMS 项目约定
+#### 4. 项目约定
 
 ```sql
 -- 关联表命名: {表1}_{表2} (按字母顺序)
@@ -184,7 +190,46 @@ bms_role_permissions  -- 角色-权限
 -- 状态值约定
 status: 0=禁用/失败, 1=启用/成功
 is_super: 0=否, 1=是
-is_deleted: 0=否, 1=是
+deleted_at: 0=正常, >0=已删除 (时间戳)
+
+-- 排序约定
+sort_order: 除权限菜单表外，其他表查询数据均默认倒序排列 (ORDER BY sort_order DESC)
+```
+
+#### 5. 列表筛选查询约定
+
+**Controller 层**: 收集前端筛选条件
+
+```php
+$where = array();
+$where['is_delete'] = 1;    // 是否包含已删除
+$where['status'] = -1;      // -1 表示全部状态
+$where['name'] = '关键词';   // 模糊搜索
+```
+
+**Model 层**: 整合成 SQL 查询条件
+
+```php
+$map = array();
+
+// 删除状态筛选
+if (isset($where['is_delete']) && $where['is_delete'] == 1) {
+    $map['deleted_at'] = array('>', 0);
+} else {
+    $map['deleted_at'] = 0; // 默认排除已删除
+}
+
+// 状态筛选 (-1 表示全部)
+if (isset($where['status']) && $where['status'] !== '-1') {
+    $map['status'] = $where['status'];
+}
+
+// 名称筛选（模糊匹配）
+if (isset($where['name']) && !empty($where['name'])) {
+    $map['name'] = array('like', '%' . $where['name'] . '%');
+}
+
+$list = $this->where($map)->order('sort_order desc')->select();
 ```
 
 ### 模型层操作规范
@@ -193,9 +238,12 @@ is_deleted: 0=否, 1=是
 // ✅ 正确 - 通过 Model 层操作
 $admin = model('Admin')->findByUsername($username);
 
-// ❌ 错误 - Controller 中直接使用 M() 或 Db::name()
+// ❌ 错误 - Controller 中直接操作数据库
 $admin = M('admins')->where('username', $username)->find();
 $admin = Db::name('admins')->where('username', $username)->find();
+Db::name('role_permissions')->where('permission_id', $permissionId)->delete();
+Db::name('admin_roles')->where('role_id', $roleId)->column('admin_id');
+$adminModel->where('admin_id', $adminId)->update($data);
 ```
 
 ---
@@ -455,6 +503,60 @@ const canDelete = hasPermission('system:admin:delete')
 
 ---
 
+## 新模块开发头脑风暴流程
+
+> **重要**: 开发新功能模块前，必须先进行以下头脑风暴会议，确保设计完整、规范统一。
+
+### 1. 功能概述设计
+
+| 序号 | 设计项 | 说明 |
+|------|--------|------|
+| 1.1 | 功能模块说明 | 描述模块的核心功能和业务目标 |
+| 1.2 | 数据库设计 | 确定表名、字段、索引、关联关系 |
+| 1.3 | 后端架构设计 | Controller/Model 文件清单、API 接口设计 |
+| 1.4 | 前端架构设计 | 页面组件文件清单、功能与交互说明 |
+| 1.5 | 菜单与权限设计 | 明确菜单 type/code/path/icon/component 等值 |
+| 1.6 | 权限初始化 SQL | 构造 bms_permissions 初始化数据 |
+| 1.7 | 其他模块约束 | 是否需要上传、下载、导出等特殊功能 |
+
+### 2. 后端开发约束
+
+| 约束项 | 说明 |
+|--------|------|
+| 控制器筛选条件 | getList 方法的 where 条件设计 |
+| 添加/编辑表单验证 | 字段必填、格式、长度等验证规则 |
+| 特殊约束 | 是否有状态机、软删除、缓存等特殊逻辑 |
+
+### 3. 前端页面约束
+
+| 约束项 | 说明 |
+|--------|------|
+| 列表数据筛选条件 | 搜索表单字段、筛选类型（输入框/下拉/日期） |
+| Table 表格列展示项 | 列名、字段、宽度、自定义模板（状态标签等） |
+| 添加/编辑表单项 | 字段、placeholder、是否必填、表单类型 |
+
+### 4. 权限设计模板
+
+```
+## 菜单设计
+- 顶级目录: type=1, code={module}, title={模块名}, path=''
+- 二级菜单: type=2, code={module}:{feature}, title={功能名}, path=/{module}/{feature}, component=views/{module}/{Feature}.vue
+
+## 按钮权限
+- 新增: type=3, code={module}:{feature}:add
+- 编辑: type=3, code={module}:{feature}:edit
+- 删除: type=3, code={module}:{feature}:delete
+
+## API 权限 (与按钮权限一致)
+- 新增API: type=4, code=admin/{controller}/add
+- 编辑API: type=4, code=admin/{controller}/edit
+- 删除API: type=4, code=admin/{controller}/delete
+```
+
+> **权限约束规范**: API 权限与按钮权限保持一致，页面列表接口不需要单独的 API 权限限制。
+
+---
+
 ## 安全规范
 
 ### 密码处理
@@ -558,7 +660,17 @@ VITE_API_BASE_URL=http://api.cms101.co
 
 ### Q: CORS 跨域如何配置?
 
-A: 后端配置在 `bms-backend/application/admin/controller/Base.php`，添加允许的源到 `$allowedOrigins` 数组。
+A: 后端配置在 `bms-backend/application/admin/config.php`，修改 `cors.allowed_origins` 数组添加允许的源域名:
+```php
+'cors' => array(
+    'allowed_origins' => array(
+        'http://127.0.0.1:5173',
+        'http://localhost:5173',
+        // 添加其他允许的域名...
+    ),
+    // ...
+),
+```
 
 ### Q: Session 和 Cookie 跨域问题?
 
@@ -566,6 +678,32 @@ A: 确保:
 1. 后端 `session_set_cookie_params(0, '/', '', false, true)`
 2. 前端 axios 配置 `withCredentials: true`
 3. 后端 CORS `Access-Control-Allow-Credentials: true`
+
+---
+
+## 已知延期问题 (Deferred Issues)
+
+> **说明**: 以下安全问题已知但暂不处理，待项目有更严谨的安全需求时再优化。后续代码审查时请忽略这些问题。
+
+| # | 问题 | 位置 | 说明 | 潜在风险 |
+|---|------|------|------|----------|
+| 1 | **JWT 密钥硬编码** | `admin/config.php` | 密钥写在代码中，非环境变量 | 代码泄露后 Token 可被伪造 |
+| 2 | **数据库凭证硬编码** | `database.php` | 用户名/密码写在代码中 | 代码泄露后数据库可被访问 |
+| 3 | **Token 存 localStorage** | 前端 `store/admin.ts` | Token 存储在浏览器 localStorage | XSS 攻击可窃取 Token |
+| 4 | **CORS 应用层处理** | `Base.php` | CORS 在 PHP 层手工处理 | 预检缓存可能导致绕过 |
+| 5 | **API 权限缓存 30 天** | `Permission.php` | `getAllApiPermissions()` 缓存 30 天 | 权限变更后最长 30 天生效 |
+| 6 | **生产环境 debug 模式** | `database.php` | `app_debug => true` | 暴露 SQL 错误等敏感信息 |
+
+### 后续优化方案（供参考）
+
+当项目需要更高安全级别时，可按以下方案优化：
+
+1. **JWT 密钥**: 使用 `.env` 文件或密钥管理服务（如 Vault）
+2. **数据库凭证**: 使用环境变量或配置中心
+3. **Token 存储**: 改用 HttpOnly Cookie 或内存存储 + Refresh Token
+4. **CORS 处理**: 移至 Web 服务器层（Nginx/Apache）处理
+5. **API 权限缓存**: 缩短至 1 小时，或权限变更时主动清除缓存
+6. **Debug 模式**: 生产环境设置 `app_debug => false`
 
 ---
 

@@ -17,6 +17,10 @@ class Crontab extends Base
     {
         $page = $request->param('page', 1);
         $limit = $request->param('limit', 10);
+
+        // 分页参数校验，防止传入超大 limit 导致内存溢出
+        $page  = max(1, (int)$page);
+        $limit = min(200, max(1, (int)$limit));
         $name = $request->param('name', '');
         $status = $request->param('status', -1);
 
@@ -298,6 +302,10 @@ class Crontab extends Base
         $page = $request->param('page', 1);
         $limit = $request->param('limit', 20);
 
+        // 分页参数校验
+        $page  = max(1, (int)$page);
+        $limit = min(200, max(1, (int)$limit));
+
         if ($crontabId <= 0) {
             $this->apiReturn(400, '参数错误');
         }
@@ -329,9 +337,7 @@ class Crontab extends Base
         }
 
         // 删除该任务的所有执行记录
-        $result = \think\Db::name('crontab_logs')
-            ->where('crontab_id', $crontabId)
-            ->delete();
+        $result = $crontabModel->clearLogs($crontabId);
 
         if ($result !== false) {
             $this->apiReturn(200, '清空成功');

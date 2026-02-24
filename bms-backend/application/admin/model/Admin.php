@@ -207,6 +207,68 @@ class Admin extends Model
     }
 
     /**
+     * 批量获取多个管理员的角色信息（避免 N+1 查询）
+     *
+     * @param array $adminIds 管理员ID数组
+     * @return array 以 admin_id 为键，包含 role_ids 和 roles 的关联数组
+     */
+    public function getRolesForAdmins($adminIds)
+    {
+        if (empty($adminIds)) {
+            return array();
+        }
+
+        // 一次查询所有管理员的角色关联
+        $adminRoles = \think\Db::name('admin_roles')
+            ->where('admin_id', 'in', $adminIds)
+            ->field('admin_id, role_id')
+            ->select();
+
+        if (empty($adminRoles)) {
+            // 没有角色数据时，为每个管理员返回空数组
+            $result = array();
+            foreach ($adminIds as $adminId) {
+                $result[$adminId] = array('role_ids' => array(), 'roles' => array());
+            }
+            return $result;
+        }
+
+        // 建立 admin_id => role_ids 的映射，并收集所有 role_id
+        $adminRoleMap = array();
+        $allRoleIds   = array();
+        foreach ($adminRoles as $ar) {
+            $adminRoleMap[$ar['admin_id']][] = $ar['role_id'];
+            $allRoleIds[] = $ar['role_id'];
+        }
+        $allRoleIds = array_values(array_unique($allRoleIds));
+
+        // 一次查询所有涉及的角色详情
+        $roles    = model('Role')->where('role_id', 'in', $allRoleIds)->select();
+        $roleMap  = array();
+        foreach ($roles as $role) {
+            $roleMap[$role['role_id']] = $role;
+        }
+
+        // 组装每个管理员的角色数据
+        $result = array();
+        foreach ($adminIds as $adminId) {
+            $roleIds     = isset($adminRoleMap[$adminId]) ? $adminRoleMap[$adminId] : array();
+            $roleDetails = array();
+            foreach ($roleIds as $roleId) {
+                if (isset($roleMap[$roleId])) {
+                    $roleDetails[] = $roleMap[$roleId];
+                }
+            }
+            $result[$adminId] = array(
+                'role_ids' => $roleIds,
+                'roles'    => $roleDetails
+            );
+        }
+
+        return $result;
+    }
+
+    /**
      * 获取管理员的角色ID列表
      *
      * @param int $adminId 管理员ID
@@ -332,6 +394,19 @@ class Admin extends Model
         }
 
         $data['updated_at'] = time();
+        return $this->where('admin_id', $adminId)->update($data) !== false;
+    }
+
+    /**
+     * 修改管理员密码
+     *
+     * @param int $adminId 管理员ID
+     * @param string $password 新密码哈希
+     * @param int $passwordUpdateTime 密码修改时间
+     * @return bool
+     */
+    public function changePassword($adminId, $data)
+    {
         return $this->where('admin_id', $adminId)->update($data) !== false;
     }
 

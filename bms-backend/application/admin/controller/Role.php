@@ -29,6 +29,10 @@ class Role extends Base
         $page = $request->param('page', 1);
         $limit = $request->param('limit', 10);
 
+        // 分页参数校验，防止传入超大 limit 导致内存溢出
+        $page  = max(1, (int)$page);
+        $limit = min(200, max(1, (int)$limit));
+
         $where = array();
         $where['is_delete'] = 0;
 
@@ -254,9 +258,7 @@ class Role extends Base
             $permissionModel = model('Permission');
 
             // 查询拥有该角色的管理员
-            $adminIds = \think\Db::name('admin_roles')
-                ->where('role_id', $roleId)
-                ->column('admin_id');
+            $adminIds = $roleModel->getAdminIdsByRole($roleId);
 
             // 清除这些管理员的权限缓存
             foreach ($adminIds as $adminId) {

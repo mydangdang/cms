@@ -75,23 +75,47 @@ class Permission extends Model
     }
 
     /**
-     * 构建树形结构
+     * 构建树形结构（O(n) 迭代，替代 O(n²) 递归）
      *
      * @param array $list 权限列表
-     * @param int $parentId 父级ID
+     * @param int $parentId 根节点的父级ID
      * @return array
      */
     public function buildTree($list, $parentId = 0)
     {
-        $tree = array();
+        if (empty($list)) {
+            return array();
+        }
 
+        // 将 Model 对象转为纯数组（ThinkPHP 5.0 兼容）
+        $items = array();
         foreach ($list as $item) {
-            if ($item['parent_id'] == $parentId) {
-                $children = $this->buildTree($list, $item['permission_id']);
-                if (!empty($children)) {
-                    $item['children'] = $children;
-                }
-                $tree[] = $item;
+            $items[] = is_array($item) ? $item : $item->toArray();
+        }
+
+        // 建立 permission_id => 下标 的映射，并预初始化 children
+        $indexMap = array();
+        foreach ($items as $index => $item) {
+            $items[$index]['children'] = array();
+            $indexMap[$item['permission_id']] = $index;
+        }
+
+        // 一次遍历完成挂载（引用确保子节点修改可传递到父节点）
+        $tree = array();
+        foreach ($items as $index => $item) {
+            $pid = $item['parent_id'];
+            if ($pid == $parentId) {
+                $tree[] = &$items[$index];
+            } elseif (isset($indexMap[$pid])) {
+                $items[$indexMap[$pid]]['children'][] = &$items[$index];
+            }
+            // 父节点不在列表中（孤立节点）则丢弃，与原逻辑一致
+        }
+
+        // 移除叶子节点的空 children 数组，与原逻辑保持一致
+        foreach ($items as $index => $item) {
+            if (empty($items[$index]['children'])) {
+                unset($items[$index]['children']);
             }
         }
 
@@ -240,6 +264,19 @@ class Permission extends Model
             'deleted_at' => time(),
             'updated_at' => time()
         )) !== false;
+    }
+
+    /**
+     * 删除角色与权限的关联
+     *
+     * @param int $permissionId 权限ID
+     * @return bool
+     */
+    public function deleteRolePermissions($permissionId)
+    {
+        return \think\Db::name('role_permissions')
+            ->where('permission_id', $permissionId)
+            ->delete() !== false;
     }
 
     /**

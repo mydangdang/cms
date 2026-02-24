@@ -174,37 +174,18 @@ router.beforeEach(async (to, _from, next) => {
   // 判断是否为系统路由路径（动态路由的特征）
   const isSystemRoute = to.path.startsWith('/system/')
 
-  // 权限未加载时，加载权限和路由
-  // 这个检查放在系统路由检查之前，确保权限先加载
-  if (token && !permissionStore.loaded) {
-    try {
-      await loadDynamicRoutes()
-      // 设置当前激活的顶级目录
-      permissionStore.setActiveTopMenuByPath(to.path)
-      // 只有当路由还未匹配时才重新导航，避免重复挂载组件
-      if (to.matched.length === 0) {
-        next({ ...to, replace: true })
-        return
-      }
-    } catch (error) {
-      console.error('加载路由失败:', error)
-      ElMessage.error('权限加载失败，请重新登录')
-      localStorage.removeItem('token')
-      adminStore.resetState()
-      permissionStore.clearPermissions()
-      next('/login')
-      return
-    }
-  }
+  // 需要加载路由的场景：
+  // 1. 权限未加载（首次访问或刷新页面）
+  // 2. 权限已加载但动态路由未注册（极端情况，如首次 loadDynamicRoutes 出现竞态）
+  const needLoadRoutes =
+    token && (!permissionStore.loaded || (!isStaticRoute && isSystemRoute && to.matched.length === 0))
 
-  // 关键修复：如果路径是系统路由但未匹配，说明动态路由还未注册
-  // 权限已加载，但路由可能有问题，重新加载
-  if (!isStaticRoute && token && isSystemRoute && to.matched.length === 0) {
+  if (needLoadRoutes) {
     try {
       await loadDynamicRoutes()
       // 设置当前激活的顶级目录
       permissionStore.setActiveTopMenuByPath(to.path)
-      // 路由注册完成后，只有当路由仍未匹配时才重新导航
+      // 只有当路由仍未匹配时才重新导航，避免重复挂载组件
       if (to.matched.length === 0) {
         next({ ...to, replace: true })
         return
