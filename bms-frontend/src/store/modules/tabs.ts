@@ -68,7 +68,7 @@ export const useTabsStore = defineStore('tabs', () => {
       name: String(name || path),
       title: String(meta?.title || '未命名'),
       affix: meta?.affix === true,
-      noCache: meta?.noCache === true
+      noCache: meta?.noCache === true,
     }
 
     tabs.value.push(newTab)
@@ -179,10 +179,7 @@ export const useTabsStore = defineStore('tabs', () => {
     })
 
     // 合并：固定 tab + 目标 tab 及其右侧的 tab（排除已在固定 tab 中的）
-    tabs.value = [
-      ...affixTabs,
-      ...rightTabs.filter((tab) => !affixPaths.has(tab.path))
-    ]
+    tabs.value = [...affixTabs, ...rightTabs.filter((tab) => !affixPaths.has(tab.path))]
 
     // 如果当前激活的 tab 被关闭了，激活目标 tab
     if (!tabs.value.find((tab) => tab.path === activeTab.value)) {
@@ -215,10 +212,7 @@ export const useTabsStore = defineStore('tabs', () => {
     })
 
     // 合并：固定 tab + 目标 tab 及其左侧的 tab（排除已在固定 tab 中的）
-    tabs.value = [
-      ...affixTabs,
-      ...leftTabs.filter((tab) => !affixPaths.has(tab.path))
-    ]
+    tabs.value = [...affixTabs, ...leftTabs.filter((tab) => !affixPaths.has(tab.path))]
 
     // 如果当前激活的 tab 被关闭了，激活目标 tab
     if (!tabs.value.find((tab) => tab.path === activeTab.value)) {
@@ -241,6 +235,6 @@ export const useTabsStore = defineStore('tabs', () => {
     closeOtherTabs,
     closeAllTabs,
     closeLeftTabs,
-    closeRightTabs
+    closeRightTabs,
   }
 })

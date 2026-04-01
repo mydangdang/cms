@@ -6,7 +6,9 @@
           <span>权限管理</span>
           <div class="header-actions">
             <el-button @click="getList">刷新</el-button>
-            <el-button type="primary" v-permission="'system:permission:add'" @click="handleAdd">新增</el-button>
+            <el-button type="primary" v-permission="'system:permission:add'" @click="handleAdd"
+              >新增</el-button
+            >
           </div>
         </div>
       </template>
@@ -22,7 +24,7 @@
       >
         <el-table-column prop="title" label="权限名称" />
         <el-table-column prop="code" label="权限编码" />
-        <el-table-column label="类型" width="150">
+        <el-table-column label="类型" width="130">
           <template #default="{ row }">
             <el-tag v-if="row.type === 1" type="success">目录</el-tag>
             <el-tag v-else-if="row.type === 2" type="primary">菜单</el-tag>
@@ -39,53 +41,92 @@
             <span v-else class="text-gray">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="sort_order" label="排序" width="100" />
-        <el-table-column label="隐藏" width="80" align="center">
+        <el-table-column label="排序" width="140">
+          <template #default="{ row }">
+            <SortableInput
+              v-model="row.sort_order"
+              :sort-api="sortPermission"
+              :row-data="row"
+              id-field="permission_id"
+              permission="system:permission:resort"
+              @success="handleSortSuccess"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="隐藏" width="100">
           <template #default="{ row }">
             <el-tag :type="row.is_hidden === 1 ? 'warning' : 'info'" size="small">
               {{ row.is_hidden === 1 ? '是' : '否' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="固定" width="80" align="center">
+        <el-table-column label="固定" width="100">
           <template #default="{ row }">
             <el-tag :type="row.is_affix === 1 ? 'success' : 'info'" size="small">
               {{ row.is_affix === 1 ? '是' : '否' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="缓存" width="80" align="center">
+        <el-table-column label="缓存" width="100">
           <template #default="{ row }">
             <el-tag :type="row.is_cache === 1 ? 'success' : 'info'" size="small">
               {{ row.is_cache === 1 ? '是' : '否' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="150">
+        <el-table-column label="状态" width="130">
           <template #default="{ row }">
             <StatusTag :status="row.status" />
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right">
+        <el-table-column label="操作" fixed="right" width="220">
           <template #default="{ row }">
-            <el-button type="primary" plain size="small" v-permission="'system:permission:edit'" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="success" plain size="small" v-permission="'system:permission:add'" @click="handleAddChild(row)">新增子项</el-button>
-            <el-button type="danger" plain size="small" v-permission="'system:permission:delete'" @click="handleDelete(row)">删除</el-button>
+            <el-button
+              type="primary"
+              plain
+              size="small"
+              v-permission="'system:permission:edit'"
+              @click="handleEdit(row)"
+              >编辑</el-button
+            >
+            <el-button
+              type="success"
+              plain
+              size="small"
+              v-permission="'system:permission:add'"
+              @click="handleAddChild(row)"
+              >新增子项</el-button
+            >
+            <el-button
+              type="danger"
+              plain
+              size="small"
+              v-permission="'system:permission:delete'"
+              @click="handleDelete(row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="700px" :close-on-click-modal="false" @close="handleCloseDialog">
-      <el-form :model="formData" :rules="formRules" ref="formRef" label-width="100px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="700px"
+      :close-on-click-modal="false"
+      @close="handleCloseDialog"
+    >
+      <el-form :model="formData" :rules="formRules" ref="formRef" label-width="120px">
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="上级权限">
               <el-tree-select
                 v-model="formData.parent_id"
                 :data="permissionTreeData"
-                :props="{ label: 'title', value: 'permission_id', children: 'children' }"
+                :props="{ label: 'title', children: 'children' }"
+                value-key="permission_id"
                 placeholder="请选择上级权限"
                 check-strictly
                 clearable
@@ -112,7 +153,10 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="权限编码" prop="code">
-              <el-input v-model="formData.code" placeholder="请输入权限编码，如：system:user:list" />
+              <el-input
+                v-model="formData.code"
+                placeholder="请输入权限编码，如：system:user:list"
+              />
             </el-form-item>
           </el-col>
         </el-row>
@@ -120,7 +164,10 @@
           <el-input v-model="formData.path" placeholder="请输入路由路径，如：/system/user" />
         </el-form-item>
         <el-form-item label="组件路径" v-if="formData.type === 2">
-          <el-input v-model="formData.component" placeholder="请输入组件路径，如：@/views/system/UserList.vue" />
+          <el-input
+            v-model="formData.component"
+            placeholder="请输入组件路径，如：@/views/system/UserList.vue"
+          />
         </el-form-item>
         <el-row :gutter="20">
           <el-col :span="12">
@@ -134,33 +181,56 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="排序">
-              <el-input-number v-model="formData.sort_order" :min="0" :max="9999" />
+              <el-input v-model="formData.sort_order" placeholder="请输入排序号" />
             </el-form-item>
           </el-col>
         </el-row>
         <el-row :gutter="20" v-if="[1, 2].includes(formData.type)">
-          <el-col :span="8">
+          <el-col :span="12">
             <el-form-item label="是否隐藏">
-              <el-switch v-model="formData.is_hidden" :active-value="1" :inactive-value="0" />
+              <el-select v-model="formData.is_hidden" placeholder="请选择" style="width: 100%">
+                <el-option :value="0" label="否" />
+                <el-option :value="1" label="是" />
+              </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :span="12">
             <el-form-item label="是否固定">
-              <el-switch v-model="formData.is_affix" :active-value="1" :inactive-value="0" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="开启缓存">
-              <el-switch v-model="formData.is_cache" :active-value="1" :inactive-value="0" />
+              <el-select v-model="formData.is_affix" placeholder="请选择" style="width: 100%">
+                <el-option :value="0" label="否" />
+                <el-option :value="1" label="是" />
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="formData.status">
-            <el-radio :value="1">启用</el-radio>
-            <el-radio :value="0">禁用</el-radio>
-          </el-radio-group>
-        </el-form-item>
+        <el-row :gutter="20" v-if="[1, 2].includes(formData.type)">
+          <el-col :span="12">
+            <el-form-item label="开启缓存">
+              <el-select v-model="formData.is_cache" placeholder="请选择" style="width: 100%">
+                <el-option :value="0" label="否" />
+                <el-option :value="1" label="是" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-select v-model="formData.status" placeholder="请选择状态" style="width: 100%">
+                <el-option :value="1" label="启用" />
+                <el-option :value="0" label="禁用" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" v-if="![1, 2].includes(formData.type)">
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-select v-model="formData.status" placeholder="请选择状态" style="width: 100%">
+                <el-option :value="1" label="启用" />
+                <el-option :value="0" label="禁用" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -178,13 +248,15 @@ import {
   addPermission,
   editPermission,
   deletePermission,
-  type Permission
+  sortPermission,
+  type Permission,
 } from '@/api/permission'
 import StatusTag from '@/components/Common/StatusTag.vue'
+import SortableInput from '@/components/Common/SortableInput.vue'
 
 // 组件名称用于 KeepAlive 缓存
 defineOptions({
-  name: 'system:permission'
+  name: 'system:permission',
 })
 
 /**
@@ -237,14 +309,14 @@ const formData = reactive({
   is_affix: 0,
   is_cache: 0,
   sort_order: 0,
-  status: 1
+  status: 1,
 })
 
 // 表单验证规则
 const formRules = {
   type: [{ required: true, message: '请选择权限类型', trigger: 'change' }],
   title: [{ required: true, message: '请输入权限标题', trigger: 'blur' }],
-  code: [{ required: true, message: '请输入权限编码', trigger: 'blur' }]
+  code: [{ required: true, message: '请输入权限编码', trigger: 'blur' }],
 }
 
 /**
@@ -265,7 +337,7 @@ const handleAdd = () => {
     is_affix: 0,
     is_cache: 0,
     sort_order: 0,
-    status: 1
+    status: 1,
   })
   dialogVisible.value = true
 }
@@ -288,7 +360,7 @@ const handleAddChild = (row: Permission) => {
     is_affix: 0,
     is_cache: 0,
     sort_order: 0,
-    status: 1
+    status: 1,
   })
   dialogVisible.value = true
 }
@@ -311,7 +383,7 @@ const handleEdit = (row: Permission) => {
     is_affix: row.is_affix,
     is_cache: row.is_cache,
     sort_order: row.sort_order,
-    status: row.status
+    status: row.status,
   })
   dialogVisible.value = true
 }
@@ -340,7 +412,7 @@ const handleSubmit = async () => {
         is_affix: formData.is_affix,
         is_cache: formData.is_cache,
         sort_order: formData.sort_order,
-        status: formData.status
+        status: formData.status,
       })
       ElMessage.success(res.msg || '编辑成功')
     } else {
@@ -356,7 +428,7 @@ const handleSubmit = async () => {
         is_affix: formData.is_affix,
         is_cache: formData.is_cache,
         sort_order: formData.sort_order,
-        status: formData.status
+        status: formData.status,
       })
       ElMessage.success(res.msg || '新增成功')
     }
@@ -378,6 +450,15 @@ const handleCloseDialog = () => {
 }
 
 /**
+ * 排序更新成功
+ */
+const handleSortSuccess = () => {
+  ElMessage.success('排序更新成功')
+  // 排序更新成功后刷新列表
+  getList()
+}
+
+/**
  * 删除
  */
 const handleDelete = async (row: Permission) => {
@@ -392,7 +473,7 @@ const handleDelete = async (row: Permission) => {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-      closeOnClickModal: false
+      closeOnClickModal: false,
     })
 
     const res = await deletePermission(row.permission_id)
@@ -418,37 +499,6 @@ onMounted(() => {
     .header-actions {
       display: flex;
       gap: 10px;
-    }
-  }
-
-  // 表格宽度 100%，列左对齐
-  .data-table {
-    width: 100%;
-    table-layout: auto;
-
-    :deep(.el-table__header-wrapper),
-    :deep(.el-table__body-wrapper) {
-      width: 100% !important;
-    }
-
-    :deep(.el-table__header),
-    :deep(.el-table__body) {
-      width: 100% !important;
-      table-layout: auto;
-    }
-
-    :deep(.el-table__header th) {
-      padding: 12px 0;
-      text-align: left;
-    }
-
-    :deep(.el-table__body td) {
-      padding: 12px 0;
-      text-align: left;
-    }
-
-    .text-gray {
-      color: #999;
     }
   }
 }

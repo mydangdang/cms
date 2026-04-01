@@ -54,9 +54,7 @@
       <div class="cron-selector__format-hint">
         <span class="cron-selector__hint-label">格式说明：</span>
         <code>* * * * *</code>
-        <span class="cron-selector__hint-detail">
-          分 时 日 月 周
-        </span>
+        <span class="cron-selector__hint-detail"> 分 时 日 月 周 </span>
       </div>
 
       <!-- 快捷示例 -->
@@ -105,7 +103,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
 import { Clock, Warning } from '@element-plus/icons-vue'
-import request from '@/utils/request'
+import { validateCron as validateCronApi } from '@/api/crontab'
 
 /**
  * Cron 表达式选择器组件
@@ -125,7 +123,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
-  disabled: false
+  disabled: false,
 })
 
 const emit = defineEmits<{
@@ -161,7 +159,7 @@ const presets = [
   { label: '每小时', value: '0 * * * *', desc: '每小时的第 0 分钟执行' },
   { label: '每天凌晨 2 点', value: '0 2 * * *', desc: '每天凌晨 2 点执行' },
   { label: '每周一凌晨', value: '0 0 * * 1', desc: '每周一凌晨 0 点执行' },
-  { label: '每月 1 号凌晨', value: '0 0 1 * *', desc: '每月 1 号凌晨 0 点执行' }
+  { label: '每月 1 号凌晨', value: '0 0 1 * *', desc: '每月 1 号凌晨 0 点执行' },
 ]
 
 /**
@@ -172,7 +170,7 @@ const examples = [
   { label: '每天 12 点', value: '0 12 * * *' },
   { label: '工作日 9 点', value: '0 9 * * 1-5' },
   { label: '每月 15 号', value: '0 0 15 * *' },
-  { label: '每季度 1 号', value: '0 0 1 1,4,7,10 *' }
+  { label: '每季度 1 号', value: '0 0 1 1,4,7,10 *' },
 ]
 
 /**
@@ -231,13 +229,7 @@ const validateAndUpdate = async (cron: string) => {
   }
 
   try {
-    const res = await request.get<{
-      valid: boolean
-      next_execute_time?: number
-      next_execute_time_text?: string
-    }>('/admin/crontab/validateCron', {
-      params: { cron: cron.trim() }
-    })
+    const res = await validateCronApi(cron.trim())
 
     if (res.code === 200) {
       nextExecuteTime.value = res.data?.next_execute_time_text || ''
@@ -250,7 +242,7 @@ const validateAndUpdate = async (cron: string) => {
     }
   } catch (error: any) {
     nextExecuteTime.value = ''
-    validationError.value = error.response?.data?.msg || '验证失败'
+    validationError.value = error.msg || '验证失败'
     emit('validate', false, validationError.value)
   }
 }
@@ -270,7 +262,7 @@ const getExecuteDescription = () => {
     return '请选择或输入 Cron 表达式'
   }
 
-  const preset = presets.find(p => p.value === currentValue.value)
+  const preset = presets.find((p) => p.value === currentValue.value)
   if (preset) {
     return preset.desc
   }
@@ -311,13 +303,13 @@ const getExecuteDescription = () => {
 /**
  * 监听 props.modelValue 变化
  */
-watch(() => props.modelValue, (newVal) => {
-  currentValue.value = newVal
-  advancedValue.value = newVal
-  if (newVal) {
-    validateAndUpdate(newVal)
+watch(
+  () => props.modelValue,
+  (newVal) => {
+    currentValue.value = newVal
+    advancedValue.value = newVal
   }
-})
+)
 
 /**
  * 组件挂载时验证初始值
@@ -339,7 +331,7 @@ defineExpose({
     advancedValue.value = value
     emitValue(value)
     validateAndUpdate(value)
-  }
+  },
 })
 </script>
 

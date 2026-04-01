@@ -6,8 +6,8 @@ import { usePermissionStore } from '@/store/modules/permission'
  * Story 2.8: 按钮权限与路由守卫
  *
  * 用法：
- * <el-button v-permission="'system:admin:add'">新增</el-button>
- * <el-button v-permission="['system:admin:add', 'system:admin:edit']">操作</el-button>
+ * <el-button v-permission="'system:manager:add'">新增</el-button>
+ * <el-button v-permission="['system:manager:add', 'system:manager:edit']">操作</el-button>
  */
 const permission: Directive = {
   mounted(el: HTMLElement, binding: DirectiveBinding) {
@@ -32,7 +32,7 @@ const permission: Directive = {
     } else {
       throw new Error('权限指令需要提供权限码')
     }
-  }
+  },
 }
 
 export default permission

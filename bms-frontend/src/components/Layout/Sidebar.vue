@@ -3,7 +3,7 @@
     <!-- 系统标题 + 当前顶级目录 -->
     <div class="sidebar__header">
       <div class="header-top">
-        <span class="system-title" v-show="!isCollapsed">BMS 后台管理系统</span>
+        <span class="system-title" v-show="!isCollapsed">{{ appTitle }}</span>
         <el-icon class="toggle-icon" @click="toggleCollapse">
           <component :is="isCollapsed ? Expand : Fold" />
         </el-icon>
@@ -52,11 +52,7 @@
         </el-sub-menu>
 
         <!-- 二级菜单（无子菜单）- 直接点击 -->
-        <el-menu-item
-          v-else-if="menu.type === 2"
-          :index="menu.path"
-          @click="handleMenuClick(menu)"
-        >
+        <el-menu-item v-else-if="menu.type === 2" :index="menu.path" @click="handleMenuClick(menu)">
           <el-icon v-if="menu.icon">
             <component :is="getIcon(menu.icon)" />
           </el-icon>
@@ -93,6 +89,9 @@ import { loadDynamicRoutes } from '@/router'
 const router = useRouter()
 const route = useRoute()
 const permissionStore = usePermissionStore()
+
+// 系统名称（从环境变量读取）
+const appTitle = import.meta.env.VITE_APP_TITLE
 
 // 侧边栏折叠状态
 const isCollapsed = ref(false)

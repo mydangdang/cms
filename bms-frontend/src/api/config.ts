@@ -10,9 +10,9 @@ import request from '@/utils/request'
  */
 export enum ConfigGroup {
   Undefined = 0,
-  Site = 1,      // 站点设置
+  Site = 1, // 站点设置
   Operation = 2, // 运营参数
-  System = 3     // 系统参数
+  System = 3, // 系统参数
 }
 
 /**
@@ -22,7 +22,7 @@ export const ConfigGroupNames: Record<ConfigGroup, string> = {
   [ConfigGroup.Undefined]: '未定义',
   [ConfigGroup.Site]: '站点设置',
   [ConfigGroup.Operation]: '运营参数',
-  [ConfigGroup.System]: '系统参数'
+  [ConfigGroup.System]: '系统参数',
 }
 
 /**
@@ -38,7 +38,7 @@ export const ConfigTypeNames: Record<ConfigType, string> = {
   number: '数字',
   boolean: '布尔',
   textarea: '长文本',
-  array: '数组'
+  array: '数组',
 }
 
 /**
@@ -63,7 +63,7 @@ export interface ConfigItem {
 /**
  * 配置分组（用于编辑页面的缓存数据）
  */
-export interface ConfigGroup {
+export interface ConfigGroupMap {
   [key: string]: ConfigItem[]
 }
 
@@ -93,7 +93,7 @@ export interface ConfigForm {
  * 获取配置分组列表（缓存数据，用于配置编辑页面）
  */
 export const getConfigGroupedList = () => {
-  return request.get<ConfigGroup>('/admin/config/getGroupedList')
+  return request.get<ConfigGroupMap>('/admin/config/getGroupedList')
 }
 
 /**
@@ -106,14 +106,6 @@ export const getConfigList = (params?: {
   config_group?: ConfigGroup
 }) => {
   return request.get<ConfigListResponse>('/admin/config/getList', { params })
-}
-
-/**
- * 获取配置详情
- * @param config_id 配置ID
- */
-export const getConfigDetail = (config_id: number) => {
-  return request.get<ConfigItem>('/admin/config/getDetail', { params: { config_id } })
 }
 
 /**
@@ -138,4 +130,14 @@ export const editConfig = (data: ConfigForm) => {
  */
 export const deleteConfig = (config_id: number) => {
   return request.post<null>('/admin/config/delete', { config_id })
+}
+
+/**
+ * 更新配置排序
+ * POST /admin/config/resort
+ * @param config_id 配置ID
+ * @param sort_order 排序值
+ */
+export const sortConfig = (config_id: number, sort_order: number) => {
+  return request.post<null>('/admin/config/resort', { config_id, sort_order })
 }

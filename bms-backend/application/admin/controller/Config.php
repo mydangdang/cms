@@ -52,7 +52,7 @@ class Config extends Base
         }
 
         $configModel = model('Config');
-        $result = $configModel->getList($where, $page, $limit);
+        $result = $configModel->listConfig($where, $page, $limit);
 
         // 添加分组名称和类型名称
         foreach ($result['list'] as &$item) {
@@ -61,28 +61,6 @@ class Config extends Base
         }
 
         $this->apiReturn(200, '获取成功', $result);
-    }
-
-    /**
-     * 获取配置详情
-     * GET /admin/config/getDetail
-     */
-    public function getDetail(Request $request)
-    {
-        $configId = $request->param('config_id', 0);
-
-        if ($configId <= 0) {
-            $this->apiReturn(400, '参数错误');
-        }
-
-        $configModel = model('Config');
-        $config = $configModel->getDetail($configId);
-
-        if (empty($config)) {
-            $this->apiReturn(400, '配置项不存在');
-        }
-
-        $this->apiReturn(200, '获取成功', $config);
     }
 
     /**
@@ -125,7 +103,7 @@ class Config extends Base
         }
 
         $configModel = model('Config');
-        $configId = $configModel->add($data);
+        $configId = $configModel->addConfig($data);
 
         if ($configId !== false) {
             $this->apiReturn(200, '添加成功', array('config_id' => $configId));
@@ -147,7 +125,7 @@ class Config extends Base
         }
 
         $configModel = model('Config');
-        $config = $configModel->getDetail($configId);
+        $config = $configModel->detailConfig($configId);
 
         if (empty($config)) {
             $this->apiReturn(400, '配置项不存在');
@@ -186,7 +164,7 @@ class Config extends Base
             $this->apiReturn(400, '配置值格式不正确');
         }
 
-        $result = $configModel->edit($configId, $data);
+        $result = $configModel->editConfig($configId, $data);
 
         if ($result !== false) {
             $this->apiReturn(200, '更新成功');
@@ -208,12 +186,44 @@ class Config extends Base
         }
 
         $configModel = model('Config');
-        $result = $configModel->remove($configId);
+        $result = $configModel->deleteConfig($configId);
 
         if ($result !== false) {
             $this->apiReturn(200, '删除成功');
         } else {
             $this->apiReturn(400, '删除失败');
+        }
+    }
+
+    /**
+     * 更新配置排序
+     * POST /admin/config/sort
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function resort(Request $request)
+    {
+        $configId = $request->param('config_id', 0);
+        $sortOrder = $request->param('sort_order', 0);
+
+        // 参数校验
+        if ($configId <= 0) {
+            $this->apiReturn(400, '参数错误');
+        }
+
+        // 验证排序值
+        if (!is_numeric($sortOrder) || $sortOrder < 0) {
+            $this->apiReturn(400, '排序值必须是非负整数');
+        }
+
+        $configModel = model('Config');
+        $result = $configModel->editConfig($configId, array('sort_order' => $sortOrder));
+
+        if ($result !== false) {
+            $this->apiReturn(200, '排序更新成功');
+        } else {
+            $this->apiReturn(400, '排序更新失败');
         }
     }
 

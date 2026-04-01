@@ -25,18 +25,10 @@ export default defineConfig({
     },
   },
   server: {
-    // 绑定到所有接口，可以通过 127.0.0.1 或 localhost 或 api.bms.co 访问
+    // 绑定到所有接口，可以通过 127.0.0.1 或 localhost 访问
     host: '0.0.0.0',
     port: 5173,
     strictPort: true,
-    // API 代理配置
-    proxy: {
-      '/api': {
-        target: 'http://api.bms.co',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
   },
   build: {
     rollupOptions: {

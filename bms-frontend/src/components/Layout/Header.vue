@@ -85,7 +85,7 @@ import { User, SwitchButton, Setting } from '@element-plus/icons-vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAdminStore } from '@/store/modules/admin'
 import { usePermissionStore } from '@/store/modules/permission'
-import { editAdmin, type Admin } from '@/api/admin'
+import { editManager, type Manager } from '@/api/manager'
 import { loadDynamicRoutes } from '@/router'
 import type { Permission } from '@/api/permission'
 
@@ -146,44 +146,40 @@ const formData = reactive({
   real_name: '',
   mobile: '',
   password: '',
-  confirmPassword: ''
+  confirmPassword: '',
 })
+
+type AdminInfoWithRoles = Manager & { is_super?: number; roles?: Array<{ name: string }> }
 
 // 角色文本（显示用）
 const roleText = computed(() => {
-  const adminInfo = adminStore.adminInfo
+  const adminInfo = adminStore.adminInfo as AdminInfoWithRoles | null
   if (!adminInfo) return '-'
-  if ((adminInfo as any).is_super === 1) return '超级管理员'
-  const roles = (adminInfo as any).roles
+  if (adminInfo.is_super === 1) return '超级管理员'
+  const roles = adminInfo.roles
   if (roles && roles.length > 0) {
-    return roles.map((r: any) => r.name).join('、')
+    return roles.map((r) => r.name).join('、')
   }
   return '未分配角色'
 })
 
 // 表单验证规则
 const rules = reactive<FormRules>({
-  real_name: [
-    { max: 50, message: '真实姓名长度不能超过50个字符', trigger: 'blur' }
-  ],
-  mobile: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-  ],
-  password: [
-    { min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }
-  ],
+  real_name: [{ max: 50, message: '真实姓名长度不能超过50个字符', trigger: 'blur' }],
+  mobile: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }],
+  password: [{ min: 6, max: 20, message: '密码长度为6-20个字符', trigger: 'blur' }],
   confirmPassword: [
     {
-      validator: (rule, value, callback) => {
+      validator: (_rule, value, callback) => {
         if (formData.password && value !== formData.password) {
           callback(new Error('两次输入的密码不一致'))
         } else {
           callback()
         }
       },
-      trigger: 'blur'
-    }
-  ]
+      trigger: 'blur',
+    },
+  ],
 })
 
 const handleCommand = async (command: string) => {
@@ -192,17 +188,19 @@ const handleCommand = async (command: string) => {
     ElMessageBox.confirm('确认退出登录吗？', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
-      type: 'warning'
-    }).then(async () => {
-      try {
-        await adminStore.logout(router)
-        ElMessage.success('登出成功')
-      } catch (error) {
-        ElMessage.error('登出失败')
-      }
-    }).catch(() => {
-      // 取消登出
+      type: 'warning',
     })
+      .then(async () => {
+        try {
+          await adminStore.logout(router)
+          ElMessage.success('登出成功')
+        } catch (error) {
+          ElMessage.error('登出失败')
+        }
+      })
+      .catch(() => {
+        // 取消登出
+      })
   } else if (command === 'settings') {
     // 打开个人设置弹窗
     openSettingsDialog()
@@ -237,10 +235,10 @@ const handleSubmit = async () => {
     try {
       submitLoading.value = true
 
-      const submitData: Partial<Admin> & { admin_id: number } = {
+      const submitData: Partial<Manager> & { admin_id: number } = {
         admin_id: formData.admin_id,
         real_name: formData.real_name,
-        mobile: formData.mobile
+        mobile: formData.mobile,
       }
 
       // 如果填写了密码，则更新密码
@@ -248,7 +246,7 @@ const handleSubmit = async () => {
         submitData.password = formData.password
       }
 
-      const res = await editAdmin(submitData)
+      const res = await editManager(submitData)
       ElMessage.success(res.msg || '保存成功')
 
       // 如果修改了密码，强制退出到登录页
@@ -261,7 +259,7 @@ const handleSubmit = async () => {
           adminStore.setAdminInfo({
             ...adminStore.adminInfo,
             real_name: formData.real_name,
-            mobile: formData.mobile
+            mobile: formData.mobile,
           })
         }
         dialogVisible.value = false

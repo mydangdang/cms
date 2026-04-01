@@ -162,9 +162,7 @@ export const usePermissionStore = defineStore('permission', () => {
       .filter((p) => p.type === 1 || p.type === 2) // 只取目录和菜单
       .map((p) => ({
         ...p,
-        children: p.children && p.children.length > 0
-          ? filterMenusTree(p.children)
-          : undefined
+        children: p.children && p.children.length > 0 ? filterMenusTree(p.children) : undefined,
       }))
   }
 
@@ -299,6 +297,9 @@ export const usePermissionStore = defineStore('permission', () => {
     }
 
     const firstChild = topMenu.children[0]
+    if (!firstChild) {
+      return null
+    }
 
     // 如果第一个子菜单是菜单类型(type=2)，直接返回
     if (firstChild.type === 2 && firstChild.path) {
@@ -308,6 +309,9 @@ export const usePermissionStore = defineStore('permission', () => {
     // 如果第一个子菜单是目录类型(type=1)，找其第一个菜单
     if (firstChild.type === 1 && firstChild.children && firstChild.children.length > 0) {
       const firstGrandChild = firstChild.children[0]
+      if (!firstGrandChild) {
+        return null
+      }
       if (firstGrandChild.type === 2 && firstGrandChild.path) {
         return firstGrandChild.path
       }
@@ -362,6 +366,6 @@ export const usePermissionStore = defineStore('permission', () => {
     clearDynamicRoutes,
     setActiveTopMenu,
     setActiveTopMenuByPath,
-    getFirstMenuPath
+    getFirstMenuPath,
   }
 })

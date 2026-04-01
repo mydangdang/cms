@@ -4,14 +4,21 @@
       <template #header>
         <div class="card-header">
           <span>定时任务管理</span>
-          <el-button type="primary" v-permission="'system:crontab:add'" @click="handleAdd">新增</el-button>
+          <el-button type="primary" v-permission="'system:crontab:add'" @click="handleAdd"
+            >新增</el-button
+          >
         </div>
       </template>
 
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="任务名称">
-          <el-input v-model="searchForm.name" placeholder="请输入任务名称" clearable style="width: 200px" />
+          <el-input
+            v-model="searchForm.name"
+            placeholder="请输入任务名称"
+            clearable
+            style="width: 200px"
+          />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="请选择状态" style="width: 120px">
@@ -31,7 +38,7 @@
 
       <!-- 数据表格 -->
       <el-table :data="tableData" border v-loading="loading" class="data-table">
-        <el-table-column prop="crontab_id" label="ID" width="100" />
+        <el-table-column prop="crontab_id" label="ID" width="120" />
         <el-table-column prop="name" label="任务名称" />
         <el-table-column prop="cron" label="Cron表达式">
           <template #default="{ row }">
@@ -39,31 +46,71 @@
           </template>
         </el-table-column>
         <el-table-column prop="command" label="执行方法名" show-overflow-tooltip />
-        <el-table-column label="最后执行">
+        <el-table-column label="最后执行" width="180">
           <template #default="{ row }">
             <span :class="{ 'text-today': isToday(row.last_execute_time) }">
               {{ formatLastExecuteTime(row.last_execute_time) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="下次执行">
+        <el-table-column label="下次执行" width="180">
           <template #default="{ row }">
             <span :class="{ 'text-today': isToday(row.next_execute_time) }">
               {{ formatNextExecuteTime(row.next_execute_time) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="120">
+        <el-table-column label="状态" width="130">
           <template #default="{ row }">
             <StatusTag :status="row.status" />
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right">
+        <el-table-column label="排序" width="140">
           <template #default="{ row }">
-            <el-button type="primary" plain size="small" v-permission="'system:crontab:edit'" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" plain size="small" v-permission="'system:crontab:delete'" @click="handleDelete(row)">删除</el-button>
-            <el-button type="success" plain size="small" v-permission="'system:crontab:getlogs'" @click="handleLogs(row)">记录</el-button>
-            <el-button type="info" plain size="small" v-permission="'system:crontab:execute'" @click="handleExecute(row)">执行</el-button>
+            <SortableInput
+              v-model="row.sort_order"
+              :sort-api="sortCrontab"
+              :row-data="row"
+              id-field="crontab_id"
+              permission="system:crontab:resort"
+              @success="handleSortSuccess"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" fixed="right" width="280">
+          <template #default="{ row }">
+            <el-button
+              type="primary"
+              plain
+              size="small"
+              v-permission="'system:crontab:edit'"
+              @click="handleEdit(row)"
+              >编辑</el-button
+            >
+            <el-button
+              type="danger"
+              plain
+              size="small"
+              v-permission="'system:crontab:delete'"
+              @click="handleDelete(row)"
+              >删除</el-button
+            >
+            <el-button
+              type="success"
+              plain
+              size="small"
+              v-permission="'system:crontab:getlogs'"
+              @click="handleLogs(row)"
+              >记录</el-button
+            >
+            <el-button
+              type="info"
+              plain
+              size="small"
+              v-permission="'system:crontab:execute'"
+              @click="handleExecute(row)"
+              >执行</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -81,7 +128,13 @@
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="700px" :close-on-click-modal="false" @close="handleCloseDialog">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="700px"
+      :close-on-click-modal="false"
+      @close="handleCloseDialog"
+    >
       <el-form :model="formData" :rules="formRules" ref="formRef" label-width="120px">
         <el-form-item label="任务名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入任务名称" />
@@ -98,19 +151,29 @@
           />
         </el-form-item>
 
-        <el-form-item label="排序" prop="sort_order">
-          <el-input-number v-model="formData.sort_order" :min="0" :max="9999" style="width: 100%" />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-select v-model="formData.status" placeholder="请选择状态" style="width: 100%">
+                <el-option :value="1" label="启用" />
+                <el-option :value="0" label="禁用" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="排序" prop="sort_order">
+              <el-input v-model="formData.sort_order" placeholder="请输入排序号" />
+            </el-form-item>
+          </el-col>
+        </el-row>
 
         <el-form-item label="任务描述" prop="description">
-          <el-input v-model="formData.description" type="textarea" :rows="2" placeholder="请输入任务描述" />
-        </el-form-item>
-
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="formData.status">
-            <el-radio :value="1">启用</el-radio>
-            <el-radio :value="0">禁用</el-radio>
-          </el-radio-group>
+          <el-input
+            v-model="formData.description"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入任务描述"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -120,11 +183,16 @@
     </el-dialog>
 
     <!-- 执行记录弹窗 -->
-    <el-dialog v-model="logsDialogVisible" title="执行记录" width="1000px" :close-on-click-modal="false">
+    <el-dialog
+      v-model="logsDialogVisible"
+      title="执行记录"
+      width="1000px"
+      :close-on-click-modal="false"
+    >
       <template #header>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center">
           <span>执行记录</span>
-          <div style="display: flex; gap: 10px;">
+          <div style="display: flex; gap: 10px">
             <el-button type="danger" size="small" @click="handleClearLogs" v-if="canClearLogs">
               清空
             </el-button>
@@ -135,25 +203,29 @@
         </div>
       </template>
 
-      <el-table :data="logsData" border v-loading="logsLoading" max-height="500" empty-text="暂无执行记录">
-        <el-table-column label="执行类型" width="160" align="center">
+      <el-table
+        :data="logsData"
+        border
+        v-loading="logsLoading"
+        max-height="500"
+        empty-text="暂无执行记录"
+      >
+        <el-table-column label="执行类型" width="130">
           <template #default="{ row }">
             <el-tag v-if="row.execute_type === 1" type="primary">API执行</el-tag>
             <el-tag v-else-if="row.execute_type === 2" type="info">CLI执行</el-tag>
             <el-tag v-else type="info">未知</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="160" align="center">
+        <el-table-column label="状态" width="130">
           <template #default="{ row }">
             <el-tag v-if="row.status === 1" type="success">成功</el-tag>
             <el-tag v-else-if="row.status === 0" type="danger">失败</el-tag>
             <el-tag v-else-if="row.status === 2" type="warning">超时</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="耗时" width="160" align="center">
-          <template #default="{ row }">
-            {{ row.duration }}s
-          </template>
+        <el-table-column label="耗时" width="100">
+          <template #default="{ row }"> {{ row.duration }}s </template>
         </el-table-column>
         <el-table-column label="执行时间" width="180">
           <template #default="{ row }">
@@ -176,7 +248,12 @@
     </el-dialog>
 
     <!-- 日志详情弹窗 -->
-    <el-dialog v-model="logDetailDialogVisible" :title="logDetailTitle" width="700px" :close-on-click-modal="false">
+    <el-dialog
+      v-model="logDetailDialogVisible"
+      :title="logDetailTitle"
+      width="700px"
+      :close-on-click-modal="false"
+    >
       <pre class="log-detail-content">{{ logDetailContent }}</pre>
     </el-dialog>
   </div>
@@ -186,15 +263,26 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessageBox, ElMessage, ElNotification } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import { getCrontabList, addCrontab, editCrontab, deleteCrontab, executeCrontab, getCrontabLogs, clearCrontabLogs, type Crontab } from '@/api/crontab'
+import {
+  getCrontabList,
+  addCrontab,
+  editCrontab,
+  deleteCrontab,
+  executeCrontab,
+  getCrontabLogs,
+  clearCrontabLogs,
+  sortCrontab,
+  type Crontab,
+} from '@/api/crontab'
 import CronSelector from '@/components/System/CronSelector.vue'
+import SortableInput from '@/components/Common/SortableInput.vue'
 import { usePermission } from '@/composables/usePermission'
 import { isToday, formatTimestamp, STATUS_OPTIONS } from '@/utils/commonUtils'
 import StatusTag from '@/components/Common/StatusTag.vue'
 
 // 组件名称用于 KeepAlive 缓存
 defineOptions({
-  name: 'system:crontab'
+  name: 'system:crontab',
 })
 
 /**
@@ -205,7 +293,7 @@ defineOptions({
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  status: -1 as number // 默认全部，-1 表示全部
+  status: -1 as number, // 默认全部，-1 表示全部
 })
 
 // 表格数据
@@ -215,7 +303,7 @@ const tableData = ref<Crontab[]>([])
 const pagination = reactive({
   page: 1,
   limit: 10,
-  total: 0
+  total: 0,
 })
 
 // 加载状态
@@ -229,7 +317,7 @@ const getList = async () => {
     loading.value = true
     const params: any = {
       page: pagination.page,
-      limit: pagination.limit
+      limit: pagination.limit,
     }
     if (searchForm.name) {
       params.name = searchForm.name
@@ -279,7 +367,7 @@ const formData = reactive({
   command: '',
   description: '',
   sort_order: 0,
-  status: 1
+  status: 1,
 })
 
 // 表单验证规则
@@ -289,8 +377,8 @@ const formRules = {
   command: [
     { required: true, message: '请输入执行方法名', trigger: 'blur' },
     { min: 6, max: 20, message: '执行方法名长度为6-20个字母', trigger: 'blur' },
-    { pattern: /^[a-zA-Z]+$/, message: '执行方法名只能包含大小写字母', trigger: 'blur' }
-  ]
+    { pattern: /^[a-zA-Z]+$/, message: '执行方法名只能包含大小写字母', trigger: 'blur' },
+  ],
 }
 
 /**
@@ -308,7 +396,7 @@ const handleAdd = () => {
     command: '',
     description: '',
     sort_order: 0,
-    status: 1
+    status: 1,
   })
   dialogVisible.value = true
 }
@@ -325,7 +413,7 @@ const handleEdit = (row: Crontab) => {
     command: row.command,
     description: row.description || '',
     sort_order: row.sort_order || 0,
-    status: row.status
+    status: row.status,
   })
   dialogVisible.value = true
 }
@@ -348,7 +436,7 @@ const handleSubmit = async () => {
         command: formData.command,
         description: formData.description,
         sort_order: formData.sort_order,
-        status: formData.status
+        status: formData.status,
       })
       ElMessage.success(res.msg || '编辑成功')
     } else {
@@ -358,7 +446,7 @@ const handleSubmit = async () => {
         command: formData.command,
         description: formData.description,
         sort_order: formData.sort_order,
-        status: formData.status
+        status: formData.status,
       })
       ElMessage.success(res.msg || '新增成功')
     }
@@ -387,12 +475,12 @@ const handleExecute = async (row: Crontab) => {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-      closeOnClickModal: false
+      closeOnClickModal: false,
     })
 
     const loadingInstance = ElMessage.info({
       message: '正在执行任务...',
-      duration: 0
+      duration: 0,
     })
 
     try {
@@ -405,7 +493,7 @@ const handleExecute = async (row: Crontab) => {
           title: res.msg || '执行成功',
           message: `任务"${row.name}"执行完成，耗时 ${res.data?.duration || 0} 秒}`,
           type: 'success',
-          duration: 5000
+          duration: 5000,
         })
 
         // 刷新列表以更新执行次数和最后执行时间
@@ -429,7 +517,7 @@ const currentCrontabId = ref(0)
 
 // 权限检查
 const { hasPermission } = usePermission()
-const canClearLogs = hasPermission('system:crontab:clearLogs')
+const canClearLogs = hasPermission('system:crontab:clearlogs')
 
 // 日志详情弹窗相关
 const logDetailDialogVisible = ref(false)
@@ -454,7 +542,7 @@ const getLogs = async () => {
     const res = await getCrontabLogs({
       crontab_id: currentCrontabId.value,
       page: logsPagination.page,
-      limit: logsPagination.limit
+      limit: logsPagination.limit,
     })
     logsData.value = res.data?.list || []
     logsPagination.total = res.data?.total || 0
@@ -474,7 +562,7 @@ const handleClearLogs = async () => {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-      closeOnClickModal: false
+      closeOnClickModal: false,
     })
 
     try {
@@ -491,20 +579,12 @@ const handleClearLogs = async () => {
 }
 
 /**
- * 获取日志预览文本
+ * 排序更新成功
  */
-const getLogPreview = (text: string) => {
-  if (!text || text.length <= 50) return text
-  return text.substring(0, 50)
-}
-
-/**
- * 显示日志详情
- */
-const showLogDetail = (type: 'output' | 'error', content: string) => {
-  logDetailTitle.value = type === 'output' ? '输出内容' : '错误信息'
-  logDetailContent.value = content || '-'
-  logDetailDialogVisible.value = true
+const handleSortSuccess = () => {
+  ElMessage.success('排序更新成功')
+  // 排序更新成功后刷新列表（带筛选参数）
+  getList()
 }
 
 /**
@@ -516,7 +596,7 @@ const handleDelete = async (row: Crontab) => {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-      closeOnClickModal: false
+      closeOnClickModal: false,
     })
 
     const res = await deleteCrontab(row.crontab_id)
@@ -558,33 +638,12 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .crontab-list {
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .search-form {
-    margin-bottom: 20px;
-  }
-
-  .data-table {
-    width: 100%;
-    table-layout: auto;
-
-    .cron-code {
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      padding: 2px 6px;
-      background-color: var(--el-fill-color);
-      border-radius: 3px;
-    }
-  }
-
-  .el-pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
+  .cron-code {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    padding: 2px 6px;
+    background-color: var(--el-fill-color);
+    border-radius: 3px;
   }
 
   // 执行记录表格样式
@@ -599,41 +658,19 @@ onMounted(() => {
       }
     }
   }
-}
 
-// 日志详情内容
-.log-detail-content {
-  background-color: #f5f5f5;
-  padding: 16px;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-all;
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-// 文本辅助类
-.text-secondary {
-  color: var(--el-text-color-secondary);
-}
-
-.text-today {
-  color: var(--el-color-danger);
-  font-weight: 500;
-}
-
-.text-success {
-  color: var(--el-color-success);
-}
-
-.text-danger {
-  color: var(--el-color-danger);
-}
-
-.text-warning {
-  color: var(--el-color-warning);
+  // 日志详情内容
+  .log-detail-content {
+    background-color: #f5f5f5;
+    padding: 16px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 500px;
+    overflow-y: auto;
+  }
 }
 </style>

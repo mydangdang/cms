@@ -3,16 +3,11 @@
     <div class="login-container">
       <!-- 标题 -->
       <div class="login-header">
-        <h1 class="login-title">BMS 后台管理系统</h1>
+        <h1 class="login-title">{{ appTitle }}</h1>
       </div>
 
       <!-- 登录表单 -->
-      <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="loginRules"
-        class="login-form"
-      >
+      <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" class="login-form">
         <!-- 用户名 -->
         <el-form-item prop="username" class="form-item">
           <el-input
@@ -76,13 +71,8 @@
 
         <!-- 登录按钮 -->
         <el-form-item class="form-item">
-          <el-button
-            type="primary"
-            class="login-btn"
-            :loading="loading"
-            @click="handleLogin"
-          >
-            登  录
+          <el-button type="primary" class="login-btn" :loading="loading" @click="handleLogin">
+            登 录
           </el-button>
         </el-form-item>
       </el-form>
@@ -107,6 +97,9 @@ const permissionStore = usePermissionStore()
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
 const captchaData = ref('')
+
+// 系统名称（从环境变量读取）
+const appTitle = import.meta.env.VITE_APP_TITLE
 
 /**
  * 登录表单数据
@@ -217,7 +210,8 @@ onMounted(() => {
 <style scoped>
 /* 页面容器 - 深色背景，全屏无滚动 */
 .login-page {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background: #2d3a4b;
   height: 100vh;
   display: flex;

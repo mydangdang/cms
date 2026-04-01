@@ -37,31 +37,9 @@ class Crontab extends Base
         }
 
         $crontabModel = model('Crontab');
-        $result = $crontabModel->getList($where, $page, $limit);
+        $result = $crontabModel->listCrontab($where, $page, $limit);
 
         $this->apiReturn(200, '获取成功', $result);
-    }
-
-    /**
-     * 获取任务详情
-     * GET /admin/crontab/getDetail
-     */
-    public function getDetail(Request $request)
-    {
-        $crontabId = $request->param('crontab_id', 0);
-
-        if ($crontabId <= 0) {
-            $this->apiReturn(400, '参数错误');
-        }
-
-        $crontabModel = model('Crontab');
-        $crontab = $crontabModel->getDetail($crontabId);
-
-        if (empty($crontab)) {
-            $this->apiReturn(400, '任务不存在');
-        }
-
-        $this->apiReturn(200, '获取成功', $crontab);
     }
 
     /**
@@ -108,7 +86,7 @@ class Crontab extends Base
             $this->apiReturn(400, 'Cron表达式格式错误：' . $validateResult['error']);
         }
 
-        $result = $crontabModel->add($data);
+        $result = $crontabModel->addCrontab($data);
 
         if ($result !== false) {
             $this->apiReturn(200, '新增成功', array('crontab_id' => $result));
@@ -131,7 +109,7 @@ class Crontab extends Base
 
         // 检查任务是否存在
         $crontabModel = model('Crontab');
-        $crontab = $crontabModel->getDetail($crontabId);
+        $crontab = $crontabModel->detailCrontab($crontabId);
 
         if (empty($crontab)) {
             $this->apiReturn(400, '任务不存在');
@@ -189,7 +167,7 @@ class Crontab extends Base
             }
         }
 
-        $result = $crontabModel->edit($crontabId, $data);
+        $result = $crontabModel->editCrontab($crontabId, $data);
 
         if ($result !== false) {
             $this->apiReturn(200, '编辑成功');
@@ -211,18 +189,56 @@ class Crontab extends Base
         }
 
         $crontabModel = model('Crontab');
-        $crontab = $crontabModel->getDetail($crontabId);
+        $crontab = $crontabModel->detailCrontab($crontabId);
 
         if (empty($crontab)) {
             $this->apiReturn(400, '任务不存在');
         }
 
-        $result = $crontabModel->remove($crontabId);
+        $result = $crontabModel->deleteCrontab($crontabId);
 
         if ($result !== false) {
             $this->apiReturn(200, '删除成功');
         } else {
             $this->apiReturn(400, '删除失败');
+        }
+    }
+
+    /**
+     * 更新任务排序
+     * POST /admin/crontab/sort
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function resort(Request $request)
+    {
+        $crontabId = $request->param('crontab_id', 0);
+        $sortOrder = $request->param('sort_order', 0);
+
+        // 参数校验
+        if ($crontabId <= 0) {
+            $this->apiReturn(400, '参数错误');
+        }
+
+        // 验证排序值
+        if (!is_numeric($sortOrder) || $sortOrder < 0) {
+            $this->apiReturn(400, '排序值必须是非负整数');
+        }
+
+        $crontabModel = model('Crontab');
+        $crontab = $crontabModel->detailCrontab($crontabId);
+
+        if (empty($crontab)) {
+            $this->apiReturn(400, '任务不存在');
+        }
+
+        $result = $crontabModel->editCrontab($crontabId, array('sort_order' => $sortOrder));
+
+        if ($result !== false) {
+            $this->apiReturn(200, '排序更新成功');
+        } else {
+            $this->apiReturn(400, '排序更新失败');
         }
     }
 
@@ -269,7 +285,7 @@ class Crontab extends Base
         }
 
         $crontabModel = model('Crontab');
-        $crontab = $crontabModel->getDetail($crontabId);
+        $crontab = $crontabModel->detailCrontab($crontabId);
 
         if (empty($crontab)) {
             $this->apiReturn(400, '任务不存在');
@@ -330,7 +346,7 @@ class Crontab extends Base
 
         // 检查任务是否存在
         $crontabModel = model('Crontab');
-        $crontab = $crontabModel->getDetail($crontabId);
+        $crontab = $crontabModel->detailCrontab($crontabId);
 
         if (empty($crontab)) {
             $this->apiReturn(400, '任务不存在');

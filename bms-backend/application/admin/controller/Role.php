@@ -45,7 +45,7 @@ class Role extends Base
         }
 
         $roleModel = model('Role');
-        $result = $roleModel->getList($where, $page, $limit);
+        $result = $roleModel->listRole($where, $page, $limit);
         $list = $result['list'];
 
         // 为每个角色附加权限ID列表
@@ -101,7 +101,7 @@ class Role extends Base
             'status' => $status
         );
 
-        $result = $roleModel->add($data);
+        $result = $roleModel->addRole($data);
 
         if ($result) {
             $this->apiReturn(200, '添加成功', array('role_id' => $result));
@@ -162,7 +162,7 @@ class Role extends Base
             'status' => $status
         );
 
-        $result = $roleModel->edit($roleId, $data);
+        $result = $roleModel->editRole($roleId, $data);
 
         if ($result) {
             $this->apiReturn(200, '编辑成功');
@@ -198,12 +198,50 @@ class Role extends Base
             $this->apiReturn(400, '该角色下有管理员，无法删除');
         }
 
-        $result = $roleModel->remove($roleId);
+        $result = $roleModel->deleteRole($roleId);
 
         if ($result) {
             $this->apiReturn(200, '删除成功');
         } else {
             $this->apiReturn(400, '删除失败');
+        }
+    }
+
+    /**
+     * 更新角色排序
+     * POST /admin/role/sort
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function resort(Request $request)
+    {
+        $roleId = $request->param('role_id', 0);
+        $sortOrder = $request->param('sort_order', 0);
+
+        // 参数校验
+        if ($roleId <= 0) {
+            $this->apiReturn(400, '参数错误');
+        }
+
+        // 验证排序值
+        if (!is_numeric($sortOrder) || $sortOrder < 0) {
+            $this->apiReturn(400, '排序值必须是非负整数');
+        }
+
+        $roleModel = model('Role');
+        $role = $roleModel->findById($roleId);
+
+        if (empty($role)) {
+            $this->apiReturn(400, '角色不存在');
+        }
+
+        $result = $roleModel->editRole($roleId, array('sort_order' => $sortOrder));
+
+        if ($result !== false) {
+            $this->apiReturn(200, '排序更新成功');
+        } else {
+            $this->apiReturn(400, '排序更新失败');
         }
     }
 

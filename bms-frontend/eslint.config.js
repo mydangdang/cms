@@ -58,6 +58,9 @@ export default [
         window: 'readonly',
         document: 'readonly',
         console: 'readonly',
+        localStorage: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
         Image: 'readonly',
         HTMLCanvasElement: 'readonly',
         CanvasRenderingContext2D: 'readonly',
@@ -68,4 +71,12 @@ export default [
       'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     },
   },
+
+  {
+    files: ['**/*.vue'],
+    rules: {
+      'vue/no-v-model-argument': 'off',
+    },
+  },
+  
 ]

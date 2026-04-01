@@ -5,9 +5,9 @@ import request from '@/utils/request'
  */
 export enum PermissionType {
   Directory = 1, // 目录
-  Menu = 2,      // 菜单/页面
-  Button = 3,    // 按钮
-  Api = 4        // 接口
+  Menu = 2, // 菜单/页面
+  Button = 3, // 按钮
+  Api = 4, // 接口
 }
 
 /**
@@ -47,14 +47,6 @@ export const getPermissionList = (params?: { type?: number; status?: number }) =
 }
 
 /**
- * 获取权限详情
- * GET /admin/permission/getDetail
- */
-export const getPermissionDetail = (permission_id: number) => {
-  return request.get<Permission>('/admin/permission/getDetail', { params: { permission_id } })
-}
-
-/**
  * 新增权限
  * POST /admin/permission/add
  */
@@ -76,6 +68,16 @@ export const editPermission = (data: Partial<Permission> & { permission_id: numb
  */
 export const deletePermission = (permission_id: number) => {
   return request.post('/admin/permission/delete', { permission_id })
+}
+
+/**
+ * 更新权限排序
+ * POST /admin/permission/resort
+ * @param permission_id 权限ID
+ * @param sort_order 排序值
+ */
+export const sortPermission = (permission_id: number, sort_order: number) => {
+  return request.post('/admin/permission/resort', { permission_id, sort_order })
 }
 
 /**

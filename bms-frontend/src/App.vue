@@ -42,7 +42,7 @@ onMounted(() => {
         path: '/',
         name: 'Dashboard',
         title: '首页',
-        affix: true
+        affix: true,
       }
 
       // 查找首页标签是否已存在

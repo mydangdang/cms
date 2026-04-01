@@ -14,7 +14,7 @@ describe('captcha API', () => {
     it('应该调用获取验证码接口', async () => {
       const mockResponse = {
         code: 200,
-        message: '获取成功',
+        msg: '获取成功',
         data: { image: 'base64-image-data' },
       }
       vi.mocked(request.get).mockResolvedValue(mockResponse)

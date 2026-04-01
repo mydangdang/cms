@@ -38,14 +38,6 @@ export const getRoleList = (params?: {
 }
 
 /**
- * 获取角色详情
- * GET /admin/role/getDetail
- */
-export const getRoleDetail = (role_id: number) => {
-  return request.get<Role>('/admin/role/getDetail', { params: { role_id } })
-}
-
-/**
  * 新增角色
  * POST /admin/role/add
  */
@@ -77,4 +69,14 @@ export const deleteRole = (role_id: number) => {
  */
 export const assignPermission = (role_id: number, permission_ids: string) => {
   return request.post('/admin/role/assignPermission', { role_id, permission_ids })
+}
+
+/**
+ * 更新角色排序
+ * POST /admin/role/resort
+ * @param role_id 角色ID
+ * @param sort_order 排序值
+ */
+export const sortRole = (role_id: number, sort_order: number) => {
+  return request.post('/admin/role/resort', { role_id, sort_order })
 }

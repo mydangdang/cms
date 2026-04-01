@@ -22,7 +22,7 @@ class CrontabExecute extends Model
 
     private function clearConfigCache($crontabId)
     {
-        $result = ['state' => 0, 'msg' => '清除缓存失败'];
+        $result = array('state' => 0, 'msg' => '清除缓存失败');
         // 调用系统配置模型的清除缓存方法
         $res = model('admin/Config')->clearConfigCache();
         if ($res) {
@@ -246,14 +246,14 @@ class CrontabExecute extends Model
      */
     private function logExecution($crontab_id, $duration, $status, $message, $execute_type = 2)
     {
-        $logData = [
+        $logData = array(
             'crontab_id'   => $crontab_id,
             'execute_time' => time(),
             'duration'     => $duration,
             'status'       => $status,
             'message'      => $message,
             'execute_type' => $execute_type
-        ];
+        );
         return \think\Db::name('crontab_logs')->insert($logData);
     }
 }

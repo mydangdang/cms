@@ -18,7 +18,7 @@ class Config extends Model
     /**
      * 分组配置缓存键
      */
-    const CACHE_KEY_GROUPED = 'config:grouped';
+    const CACHE_KEY_GROUPED = 'SYSTEM_DB_CONFIG_GROUPED';
 
     /**
      * 表名
@@ -77,7 +77,7 @@ class Config extends Model
         // 从数据库查询（只查询未删除的）
         $list = $this->where('deleted_at', 0)
             ->where($where)
-            ->order('config_group ASC, sort_order ASC, config_id ASC')
+            ->order('config_group ASC, sort_order DESC, config_id DESC')
             ->select();
 
         // 按分组组织
@@ -103,7 +103,7 @@ class Config extends Model
      * @param int $limit 每页数量
      * @return array
      */
-    public function getList($where = array(), $page = 1, $limit = 20)
+    public function listConfig($where = array(), $page = 1, $limit = 20)
     {
         $map = array();
 
@@ -130,7 +130,7 @@ class Config extends Model
 
         // 分页查询
         $list = $this->where($map)
-            ->order('config_group ASC, sort_order ASC, config_id ASC')
+            ->order('config_group ASC, sort_order DESC, config_id DESC')
             ->page($page, $limit)
             ->select();
 
@@ -145,7 +145,7 @@ class Config extends Model
      * @param int $configId 配置ID
      * @return array|null
      */
-    public function getDetail($configId)
+    public function detailConfig($configId)
     {
         return $this->where('config_id', $configId)
             ->where('deleted_at', 0)
@@ -157,7 +157,7 @@ class Config extends Model
      * @param array $data 配置数据
      * @return int|false 配置ID或false
      */
-    public function add($data)
+    public function addConfig($data)
     {
         $data['created_at'] = time();
         $data['updated_at'] = time();
@@ -176,7 +176,7 @@ class Config extends Model
      * @param array $data 配置数据
      * @return bool
      */
-    public function edit($configId, $data)
+    public function editConfig($configId, $data)
     {
         $data['updated_at'] = time();
         $result = $this->where('config_id', $configId)
@@ -193,7 +193,7 @@ class Config extends Model
      * @param int $configId 配置ID
      * @return bool
      */
-    public function remove($configId)
+    public function deleteConfig($configId)
     {
         $result = $this->where('config_id', $configId)
             ->where('deleted_at', 0)

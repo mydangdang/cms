@@ -1,17 +1,24 @@
 <template>
-  <div class="admin-list">
+  <div class="manager-list">
     <el-card>
       <template #header>
         <div class="card-header">
           <span>管理员管理</span>
-          <el-button type="primary" v-permission="'system:admin:add'" @click="handleAdd">新增</el-button>
+          <el-button type="primary" v-permission="'system:manager:add'" @click="handleAdd"
+            >新增</el-button
+          >
         </div>
       </template>
 
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="用户名">
-          <el-input v-model="searchForm.username" placeholder="请输入用户名" clearable style="width: 200px" />
+          <el-input
+            v-model="searchForm.username"
+            placeholder="请输入用户名"
+            clearable
+            style="width: 200px"
+          />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="请选择状态" style="width: 120px">
@@ -31,20 +38,22 @@
 
       <!-- 数据表格 -->
       <el-table :data="tableData" border v-loading="loading" class="data-table">
-        <el-table-column prop="admin_id" label="ID" />
+        <el-table-column prop="admin_id" label="ID" width="120" />
         <el-table-column prop="username" label="用户名" />
         <el-table-column prop="real_name" label="真实姓名" />
         <el-table-column prop="mobile" label="手机号" />
         <el-table-column label="角色">
           <template #default="{ row }">
-            <span v-if="row.is_super === 1">系统管理员<span class="super-admin-tag">(超管)</span></span>
+            <span v-if="row.is_super === 1"
+              >系统管理员<span class="super-admin-tag">(超管)</span></span
+            >
             <span v-else-if="row.roles && row.roles.length > 0">
               {{ formatRoles(row.roles) }}
             </span>
             <span v-else class="text-gray">未分配</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态">
+        <el-table-column label="状态" width="130">
           <template #default="{ row }">
             <StatusTag :status="row.status" />
           </template>
@@ -56,10 +65,25 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" fixed="right">
+        <el-table-column label="操作" fixed="right" width="220">
           <template #default="{ row }">
-            <el-button type="primary" plain size="small" v-permission="'system:admin:edit'" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" plain size="small" v-permission="'system:admin:delete'" v-if="row.is_super !== 1" @click="handleDelete(row)">删除</el-button>
+            <el-button
+              type="primary"
+              plain
+              size="small"
+              v-permission="'system:manager:edit'"
+              @click="handleEdit(row)"
+              >编辑</el-button
+            >
+            <el-button
+              type="danger"
+              plain
+              size="small"
+              v-permission="'system:manager:delete'"
+              v-if="row.is_super !== 1"
+              @click="handleDelete(row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -77,10 +101,21 @@
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" :close-on-click-modal="false" @close="handleCloseDialog">
-      <el-form :model="formData" :rules="formRules" ref="formRef" label-width="100px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="700px"
+      :close-on-click-modal="false"
+      @close="handleCloseDialog"
+    >
+      <el-form :model="formData" :rules="formRules" ref="formRef" label-width="120px">
         <el-form-item label="选择角色" prop="role_ids">
-          <el-select v-model="formData.role_ids" placeholder="请选择角色" multiple style="width: 100%">
+          <el-select
+            v-model="formData.role_ids"
+            placeholder="请选择角色"
+            multiple
+            style="width: 100%"
+          >
             <el-option
               v-for="role in roleList"
               :key="role.role_id"
@@ -90,7 +125,11 @@
           </el-select>
         </el-form-item>
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="formData.username" placeholder="请输入用户名" :disabled="formData.admin_id > 0" />
+          <el-input
+            v-model="formData.username"
+            placeholder="请输入用户名"
+            :disabled="formData.admin_id > 0"
+          />
         </el-form-item>
         <el-form-item label="真实姓名" prop="real_name">
           <el-input v-model="formData.real_name" placeholder="请输入真实姓名" />
@@ -123,15 +162,15 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessageBox, ElMessage } from 'element-plus'
-import { getAdminList, addAdmin, editAdmin, deleteAdmin, type Admin } from '@/api/admin'
+import { ElMessageBox, ElMessage, type FormRules } from 'element-plus'
+import { getManagerList, addManager, editManager, deleteManager, type Manager } from '@/api/manager'
 import { getRoleList, type Role } from '@/api/role'
 import { isToday, formatTimestamp, STATUS_OPTIONS } from '@/utils/commonUtils'
 import StatusTag from '@/components/Common/StatusTag.vue'
 
 // 组件名称用于 KeepAlive 缓存
 defineOptions({
-  name: 'system:admin'
+  name: 'system:manager',
 })
 
 /**
@@ -142,11 +181,11 @@ defineOptions({
 // 搜索表单
 const searchForm = reactive({
   username: '',
-  status: 1 as number // 默认启用状态，-1 表示全部
+  status: 1 as number, // 默认启用状态，-1 表示全部
 })
 
 // 表格数据
-const tableData = ref<Admin[]>([])
+const tableData = ref<Manager[]>([])
 
 // 角色列表
 const roleList = ref<Role[]>([])
@@ -155,7 +194,7 @@ const roleList = ref<Role[]>([])
 const pagination = reactive({
   page: 1,
   limit: 10,
-  total: 0
+  total: 0,
 })
 
 // 加载状态
@@ -169,7 +208,7 @@ const getList = async () => {
     loading.value = true
     const params: any = {
       page: pagination.page,
-      limit: pagination.limit
+      limit: pagination.limit,
     }
     if (searchForm.username) {
       params.username = searchForm.username
@@ -178,7 +217,7 @@ const getList = async () => {
       params.status = searchForm.status
     }
 
-    const res = await getAdminList(params)
+    const res = await getManagerList(params)
     tableData.value = res.data?.list || []
     pagination.total = res.data?.total || 0
   } catch (error) {
@@ -233,12 +272,12 @@ const formData = reactive({
   real_name: '',
   mobile: '',
   status: 1,
-  role_ids: [] as number[]
+  role_ids: [] as number[],
 })
 
 // 表单验证规则
-const formRules = {
-  role_ids: [{ required: true, message: '请选择角色', trigger: 'change', type: 'array' }],
+const formRules: FormRules = {
+  role_ids: [{ required: true, message: '请选择角色', trigger: 'change', type: 'array' as const }],
   username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   real_name: [{ required: true, message: '请输入真实姓名', trigger: 'blur' }],
   password: [
@@ -254,10 +293,10 @@ const formRules = {
         }
         callback()
       },
-      trigger: 'blur'
-    }
+      trigger: 'blur',
+    },
   ],
-  mobile: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }]
+  mobile: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }],
 }
 
 /**
@@ -272,7 +311,7 @@ const handleAdd = () => {
     real_name: '',
     mobile: '',
     status: 1,
-    role_ids: []
+    role_ids: [],
   })
   dialogVisible.value = true
 }
@@ -280,7 +319,7 @@ const handleAdd = () => {
 /**
  * 编辑
  */
-const handleEdit = (row: Admin) => {
+const handleEdit = (row: Manager) => {
   dialogTitle.value = '编辑管理员'
   Object.assign(formData, {
     admin_id: row.admin_id,
@@ -289,7 +328,7 @@ const handleEdit = (row: Admin) => {
     real_name: row.real_name || '',
     mobile: row.mobile || '',
     status: row.status,
-    role_ids: row.role_ids || []
+    role_ids: row.role_ids || [],
   })
   dialogVisible.value = true
 }
@@ -312,22 +351,22 @@ const handleSubmit = async () => {
         real_name: formData.real_name,
         mobile: formData.mobile,
         status: formData.status,
-        role_ids: formData.role_ids
+        role_ids: formData.role_ids,
       }
       // 只有密码不为空时才传密码字段
       if (formData.password) {
         editData.password = formData.password
       }
-      const res = await editAdmin(editData)
+      const res = await editManager(editData)
       ElMessage.success(res.msg || '编辑成功')
     } else {
-      const res = await addAdmin({
+      const res = await addManager({
         username: formData.username,
         password: formData.password,
         real_name: formData.real_name,
         mobile: formData.mobile,
         status: formData.status,
-        role_ids: formData.role_ids
+        role_ids: formData.role_ids,
       })
       ElMessage.success(res.msg || '新增成功')
     }
@@ -364,16 +403,16 @@ const formatLastLoginTime = (timestamp: number) => {
 /**
  * 删除
  */
-const handleDelete = async (row: Admin) => {
+const handleDelete = async (row: Manager) => {
   try {
     await ElMessageBox.confirm('确定要删除该管理员吗？', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-      closeOnClickModal: false
+      closeOnClickModal: false,
     })
 
-    const res = await deleteAdmin(row.admin_id)
+    const res = await deleteManager(row.admin_id)
     ElMessage.success(res.msg || '删除成功')
     getList()
   } catch (error) {
@@ -388,62 +427,10 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.admin-list {
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .search-form {
-    margin-bottom: 20px;
-  }
-
-  .text-gray {
-    color: #999;
-  }
-
-  .text-today {
-    color: var(--el-color-danger);
-    font-weight: 500;
-  }
-
+.manager-list {
   .super-admin-tag {
     color: #f56c6c;
     margin-left: 10px;
-  }
-
-  // 表格宽度 100%，列均匀分布
-  .data-table {
-    width: 100%;
-    table-layout: auto;
-
-    :deep(.el-table__header-wrapper),
-    :deep(.el-table__body-wrapper) {
-      width: 100% !important;
-    }
-
-    :deep(.el-table__header),
-    :deep(.el-table__body) {
-      width: 100% !important;
-      table-layout: auto;
-    }
-
-    :deep(.el-table__header th) {
-      padding: 12px 0;
-      text-align: center;
-    }
-
-    :deep(.el-table__body td) {
-      padding: 12px 0;
-      text-align: center;
-    }
-  }
-
-  .el-pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
   }
 }
 </style>

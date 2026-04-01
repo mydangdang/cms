@@ -111,6 +111,12 @@ class Base extends CommonBase
             $this->apiReturn(401, 'Token 无效或已过期，请重新登录');
         }
 
+        $managerModel = model('Manager');
+        $managerInfo = $managerModel->findById($adminInfo['admin_id']);
+        if (empty($managerInfo) || !$managerModel->checkStatus($managerInfo)) {
+            $this->apiReturn(401, '账号已失效，请重新登录');
+        }
+
         // 检查 Token 是否在黑名单（已登出的 Token）
         if (\think\Cache::get('token_blacklist:' . md5($token))) {
             $this->apiReturn(401, 'Token 已失效，请重新登录');
@@ -123,19 +129,20 @@ class Base extends CommonBase
 
         // 验证API权限
         $permissionModel = model('Permission');
+        $isSuper = isset($managerInfo['is_super']) ? $managerInfo['is_super'] : $adminInfo['is_super'];
         // 用户角色分配的权限
-        $userPermissions = $permissionModel->extractAdminPermissionCodes($adminInfo['admin_id'], $adminInfo['is_super']);
+        $userPermissions = $permissionModel->extractAdminPermissionCodes($managerInfo['admin_id'], $isSuper);
         // 系统已配置的需要验证的权限
         $apiAllPermissions = $permissionModel->getAllApiPermissions();
         // 如果route在系统已配置的需要验证的权限中，但用户没有该权限，则拒绝访问(超级管理员不受权限限制)
-        if (!$adminInfo['is_super'] && in_array($route, $apiAllPermissions) && !in_array($route, $userPermissions)) {
+        if (!$isSuper && in_array($route, $apiAllPermissions) && !in_array($route, $userPermissions)) {
             $this->apiReturn(403, '无权限访问该接口');
         }
 
         // 将管理员信息注入到请求对象
-        request()->admin_id = $adminInfo['admin_id'];
-        request()->username = $adminInfo['username'];
-        request()->is_super = $adminInfo['is_super'];
+        request()->admin_id = $managerInfo['admin_id'];
+        request()->username = $managerInfo['username'];
+        request()->is_super = $isSuper;
     }
 
     /**

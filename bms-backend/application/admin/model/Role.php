@@ -31,7 +31,7 @@ class Role extends Model
      * @param int $limit 每页数量
      * @return array
      */
-    public function getList($where = array(), $page = 1, $limit = 0)
+    public function listRole($where = array(), $page = 1, $limit = 0)
     {
         $map = array();
 
@@ -56,12 +56,12 @@ class Role extends Model
 
         // 如果不分页，返回全部
         if ($limit <= 0) {
-            $list = $this->where($map)->order('sort_order ASC, role_id ASC')->select();
+            $list = $this->where($map)->order('sort_order DESC, role_id DESC')->select();
             return array('list' => $list, 'total' => $total);
         }
 
         // 分页查询
-        $list = $this->where($map)->order('sort_order ASC, role_id ASC')
+        $list = $this->where($map)->order('sort_order DESC, role_id DESC')
             ->page($page, $limit)
             ->select();
 
@@ -119,7 +119,7 @@ class Role extends Model
      * @param array $data 角色数据
      * @return int|bool
      */
-    public function add($data)
+    public function addRole($data)
     {
         $time = time();
         $data['created_at'] = $time;
@@ -135,7 +135,7 @@ class Role extends Model
      * @param array $data 角色数据
      * @return bool
      */
-    public function edit($roleId, $data)
+    public function editRole($roleId, $data)
     {
         $data['updated_at'] = time();
         return $this->where('role_id', $roleId)->update($data);
@@ -147,7 +147,7 @@ class Role extends Model
      * @param int $roleId 角色ID
      * @return bool
      */
-    public function remove($roleId)
+    public function deleteRole($roleId)
     {
         // 获取角色信息
         $role = $this->where('role_id', $roleId)->find();
@@ -236,5 +236,18 @@ class Role extends Model
         return \think\Db::name('role_permissions')
             ->where('role_id', $roleId)
             ->column('permission_id');
+    }
+
+    /**
+     * 获取拥有该角色的管理员ID列表
+     *
+     * @param int $roleId 角色ID
+     * @return array
+     */
+    public function getAdminIdsByRole($roleId)
+    {
+        return \think\Db::name('admin_roles')
+            ->where('role_id', $roleId)
+            ->column('admin_id');
     }
 }

@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { login as apiLogin, logout as apiLogout, type LoginParams, type AdminInfo } from '@/api/auth'
+import {
+  login as apiLogin,
+  logout as apiLogout,
+  type LoginParams,
+  type AdminInfo,
+} from '@/api/auth'
 import { usePermissionStore } from './permission'
 import type { Router } from 'vue-router'
 
@@ -23,20 +27,22 @@ export const useAdminStore = defineStore('admin', () => {
    * 管理员信息
    * 从 localStorage 初始化
    */
-  const adminInfo = ref<AdminInfo | null>((() => {
-    const stored = localStorage.getItem('adminInfo')
-    if (!stored || stored === 'undefined' || stored === 'null') {
-      return null
-    }
-    try {
-      return JSON.parse(stored)
-    } catch (e) {
-      console.error('Failed to parse adminInfo from localStorage:', e)
-      // 清除损坏的数据
-      localStorage.removeItem('adminInfo')
-      return null
-    }
-  })())
+  const adminInfo = ref<AdminInfo | null>(
+    (() => {
+      const stored = localStorage.getItem('adminInfo')
+      if (!stored || stored === 'undefined' || stored === 'null') {
+        return null
+      }
+      try {
+        return JSON.parse(stored)
+      } catch (e) {
+        console.error('Failed to parse adminInfo from localStorage:', e)
+        // 清除损坏的数据
+        localStorage.removeItem('adminInfo')
+        return null
+      }
+    })()
+  )
 
   // ========== 计算属性 ==========
 

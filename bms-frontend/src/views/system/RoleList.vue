@@ -4,14 +4,21 @@
       <template #header>
         <div class="card-header">
           <span>角色管理</span>
-          <el-button type="primary" v-permission="'system:role:add'" @click="handleAdd">新增</el-button>
+          <el-button type="primary" v-permission="'system:role:add'" @click="handleAdd"
+            >新增</el-button
+          >
         </div>
       </template>
 
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="角色名称">
-          <el-input v-model="searchForm.name" placeholder="请输入角色名称" clearable style="width: 200px" />
+          <el-input
+            v-model="searchForm.name"
+            placeholder="请输入角色名称"
+            clearable
+            style="width: 200px"
+          />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" placeholder="请选择状态" style="width: 120px">
@@ -31,20 +38,52 @@
 
       <!-- 数据表格 -->
       <el-table :data="tableData" border v-loading="loading" class="data-table">
-        <el-table-column prop="role_id" label="ID" />
+        <el-table-column prop="role_id" label="ID" width="120" />
         <el-table-column prop="name" label="角色名称" />
         <el-table-column prop="description" label="描述" show-overflow-tooltip />
-        <el-table-column label="状态">
+        <el-table-column label="状态" width="130">
           <template #default="{ row }">
             <StatusTag :status="row.status" />
           </template>
         </el-table-column>
-        <el-table-column prop="sort_order" label="排序" />
-        <el-table-column label="操作" fixed="right">
+        <el-table-column label="排序" width="140">
           <template #default="{ row }">
-            <el-button type="primary" plain size="small" v-permission="'system:role:edit'" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="warning" plain size="small" v-permission="'system:role:assignpermission'" @click="handlePermission(row)">权限</el-button>
-            <el-button type="danger" plain size="small" v-permission="'system:role:delete'" @click="handleDelete(row)">删除</el-button>
+            <SortableInput
+              v-model="row.sort_order"
+              :sort-api="sortRole"
+              :row-data="row"
+              id-field="role_id"
+              permission="system:role:resort"
+              @success="handleSortSuccess"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" fixed="right" width="220">
+          <template #default="{ row }">
+            <el-button
+              type="primary"
+              plain
+              size="small"
+              v-permission="'system:role:edit'"
+              @click="handleEdit(row)"
+              >编辑</el-button
+            >
+            <el-button
+              type="warning"
+              plain
+              size="small"
+              v-permission="'system:role:assignpermission'"
+              @click="handlePermission(row)"
+              >权限</el-button
+            >
+            <el-button
+              type="danger"
+              plain
+              size="small"
+              v-permission="'system:role:delete'"
+              @click="handleDelete(row)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -62,23 +101,40 @@
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" :close-on-click-modal="false" @close="handleCloseDialog">
-      <el-form :model="formData" :rules="formRules" ref="formRef" label-width="100px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="700px"
+      :close-on-click-modal="false"
+      @close="handleCloseDialog"
+    >
+      <el-form :model="formData" :rules="formRules" ref="formRef" label-width="120px">
         <el-form-item label="角色名称" prop="name">
           <el-input v-model="formData.name" placeholder="请输入角色名称" />
         </el-form-item>
         <el-form-item label="描述" prop="description">
-          <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入描述" />
+          <el-input
+            v-model="formData.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入描述"
+          />
         </el-form-item>
-        <el-form-item label="排序" prop="sort_order">
-          <el-input-number v-model="formData.sort_order" :min="0" :max="9999" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="formData.status">
-            <el-radio :value="1">启用</el-radio>
-            <el-radio :value="0">禁用</el-radio>
-          </el-radio-group>
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="状态" prop="status">
+              <el-select v-model="formData.status" placeholder="请选择状态" style="width: 100%">
+                <el-option :value="1" label="启用" />
+                <el-option :value="0" label="禁用" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="排序" prop="sort_order">
+              <el-input v-model="formData.sort_order" placeholder="请输入排序号" />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -87,25 +143,33 @@
     </el-dialog>
 
     <!-- 权限分配弹窗 -->
-    <el-dialog v-model="permissionDialogVisible" :title="permissionDialogTitle" width="600px" :close-on-click-modal="false" @close="handleClosePermissionDialog">
-      <el-tree
-        ref="permissionTreeRef"
-        :data="permissionTreeData"
-        :props="{ label: 'title', children: 'children' }"
-        node-key="permission_id"
-        show-checkbox
-        :key="permissionTreeKey"
-      >
-        <template #default="{ data }">
-          <span class="permission-node">
-            <span>{{ data.title }}</span>
-            <span v-if="data.code" class="permission-code">({{ data.code }})</span>
-            <span class="permission-type" :class="'type-' + data.type">
-              {{ getTypeName(data.type) }}
+    <el-dialog
+      v-model="permissionDialogVisible"
+      :title="permissionDialogTitle"
+      width="800px"
+      :close-on-click-modal="false"
+      @close="handleClosePermissionDialog"
+    >
+      <div class="permission-tree-container">
+        <el-tree
+          ref="permissionTreeRef"
+          :data="permissionTreeData"
+          :props="{ label: 'title', children: 'children' }"
+          node-key="permission_id"
+          show-checkbox
+          :key="permissionTreeKey"
+        >
+          <template #default="{ data }">
+            <span class="permission-node">
+              <span>{{ data.title }}</span>
+              <span v-if="data.code" class="permission-code">({{ data.code }})</span>
+              <span class="permission-type" :class="'type-' + data.type">
+                {{ getTypeName(data.type) }}
+              </span>
             </span>
-          </span>
-        </template>
-      </el-tree>
+          </template>
+        </el-tree>
+      </div>
       <template #footer>
         <el-button @click="permissionDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleAssignPermission">确定</el-button>
@@ -117,14 +181,23 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { getRoleList, addRole, editRole, deleteRole, assignPermission, type Role } from '@/api/role'
+import {
+  getRoleList,
+  addRole,
+  editRole,
+  deleteRole,
+  assignPermission,
+  sortRole,
+  type Role,
+} from '@/api/role'
 import { getPermissionList, type Permission } from '@/api/permission'
 import { STATUS_OPTIONS } from '@/utils/commonUtils'
 import StatusTag from '@/components/Common/StatusTag.vue'
+import SortableInput from '@/components/Common/SortableInput.vue'
 
 // 组件名称用于 KeepAlive 缓存
 defineOptions({
-  name: 'system:role'
+  name: 'system:role',
 })
 
 /**
@@ -135,7 +208,7 @@ defineOptions({
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  status: 1 as number // 默认启用状态，-1 表示全部
+  status: 1 as number, // 默认启用状态，-1 表示全部
 })
 
 // 表格数据
@@ -145,7 +218,7 @@ const tableData = ref<Role[]>([])
 const pagination = reactive({
   page: 1,
   limit: 10,
-  total: 0
+  total: 0,
 })
 
 // 加载状态
@@ -159,7 +232,7 @@ const getList = async () => {
     loading.value = true
     const params: any = {
       page: pagination.page,
-      limit: pagination.limit
+      limit: pagination.limit,
     }
     if (searchForm.name) {
       params.name = searchForm.name
@@ -207,12 +280,12 @@ const formData = reactive({
   name: '',
   description: '',
   sort_order: 0,
-  status: 1
+  status: 1,
 })
 
 // 表单验证规则
 const formRules = {
-  name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }]
+  name: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
 }
 
 /**
@@ -225,7 +298,7 @@ const handleAdd = () => {
     name: '',
     description: '',
     sort_order: 0,
-    status: 1
+    status: 1,
   })
   dialogVisible.value = true
 }
@@ -240,7 +313,7 @@ const handleEdit = (row: Role) => {
     name: row.name,
     description: row.description,
     sort_order: row.sort_order || 0,
-    status: row.status
+    status: row.status,
   })
   dialogVisible.value = true
 }
@@ -261,7 +334,7 @@ const handleSubmit = async () => {
         name: formData.name,
         description: formData.description,
         sort_order: formData.sort_order,
-        status: formData.status
+        status: formData.status,
       })
       ElMessage.success(res.msg || '编辑成功')
     } else {
@@ -269,7 +342,7 @@ const handleSubmit = async () => {
         name: formData.name,
         description: formData.description,
         sort_order: formData.sort_order,
-        status: formData.status
+        status: formData.status,
       })
       ElMessage.success(res.msg || '新增成功')
     }
@@ -361,7 +434,7 @@ const sortPermissionsByType = (permissions: Permission[]): Permission[] => {
   // 先对子权限进行排序
   const sorted = permissions.map((p) => ({
     ...p,
-    children: sortPermissionsByType(p.children || [])
+    children: sortPermissionsByType(p.children || []),
   }))
 
   // 然后按 type 排序当前层级
@@ -444,9 +517,18 @@ const getTypeName = (type: number) => {
     1: '菜单',
     2: '菜单',
     3: '按钮',
-    4: '接口'
+    4: '接口',
   }
   return typeMap[type] || '未知'
+}
+
+/**
+ * 排序更新成功
+ */
+const handleSortSuccess = () => {
+  ElMessage.success('排序更新成功')
+  // 排序更新成功后刷新列表（带筛选参数）
+  getList()
 }
 
 /**
@@ -458,7 +540,7 @@ const handleDelete = async (row: Role) => {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
-      closeOnClickModal: false
+      closeOnClickModal: false,
     })
 
     const res = await deleteRole(row.role_id)
@@ -475,49 +557,10 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.role-list {
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .search-form {
-    margin-bottom: 20px;
-  }
-
-  // 表格宽度 100%，列均匀分布
-  .data-table {
-    width: 100%;
-    table-layout: auto;
-
-    :deep(.el-table__header-wrapper),
-    :deep(.el-table__body-wrapper) {
-      width: 100% !important;
-    }
-
-    :deep(.el-table__header),
-    :deep(.el-table__body) {
-      width: 100% !important;
-      table-layout: auto;
-    }
-
-    :deep(.el-table__header th) {
-      padding: 12px 0;
-      text-align: center;
-    }
-
-    :deep(.el-table__body td) {
-      padding: 12px 0;
-      text-align: center;
-    }
-  }
-
-  .el-pagination {
-    margin-top: 20px;
-    display: flex;
-    justify-content: flex-end;
-  }
+// 权限树容器
+.permission-tree-container {
+  max-height: 800px;
+  overflow-y: auto;
 }
 
 // 权限树节点样式

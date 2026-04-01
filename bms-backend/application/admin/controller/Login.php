@@ -60,7 +60,7 @@ class Login extends Base
         model('Captcha')->clearCaptcha('login');
 
         // 查找管理员
-        $adminModel = model('Admin');
+        $adminModel = model('Manager');
         $admin = $adminModel->findByUsername($username);
 
         // 验证用户名密码
@@ -88,7 +88,7 @@ class Login extends Base
         );
 
         // 获取管理员信息（不含密码）
-        $adminInfo = $adminModel->getAdminInfo($admin['admin_id']);
+        $adminInfo = $adminModel->getManagerInfo($admin['admin_id']);
 
         // 更新最后登录信息
         $adminModel->updateLastLogin($admin['admin_id'], $ip);
@@ -155,8 +155,8 @@ class Login extends Base
         }
 
         // 获取管理员信息
-        $adminModel = model('Admin');
-        $adminInfo = $adminModel->getAdminInfo($adminId);
+        $adminModel = model('Manager');
+        $adminInfo = $adminModel->getManagerInfo($adminId);
 
         if (empty($adminInfo)) {
             $this->apiReturn(400, '管理员不存在');

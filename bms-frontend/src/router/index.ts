@@ -19,9 +19,9 @@ const staticRoutes: RouteRecordRaw[] = [
     component: () => import('@/views/auth/Login.vue'),
     meta: {
       title: '管理员登录',
-      requiresAuth: false
-    }
-  }
+      requiresAuth: false,
+    },
+  },
   // 注意：通配路由将在动态路由加载后添加
 ]
 
@@ -36,14 +36,14 @@ const initialRoutes: RouteRecordRaw[] = [
       title: '首页',
       affix: true,
       noCache: false, // 首页默认开启缓存
-      requiresAuth: true
-    }
-  }
+      requiresAuth: true,
+    },
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: initialRoutes
+  routes: initialRoutes,
 })
 
 /**
@@ -77,7 +77,7 @@ const loadDynamicRoutes = async () => {
     router.addRoute({
       path: '/:pathMatch(.*)*',
       name: 'NotFound',
-      redirect: '/'
+      redirect: '/',
     })
   }
 }
@@ -101,8 +101,8 @@ const generateRoutes = (permissions: Permission[]): RouteRecordRaw[] => {
           hidden: permission.is_hidden === 1,
           affix: permission.is_affix === 1,
           noCache: permission.is_cache !== 1, // is_cache=1 时 noCache=false（启用缓存）
-          permission_id: permission.permission_id
-        }
+          permission_id: permission.permission_id,
+        },
       }
       routes.push(route)
     }
@@ -119,20 +119,25 @@ const generateRoutes = (permissions: Permission[]): RouteRecordRaw[] => {
  * 需要转换为：../views/system/AdminList.vue
  */
 const loadView = (componentPath: string) => {
+  // 添加 .vue 扩展名（如果不存在）
+  const addVueExtension = (path: string) => {
+    return path.endsWith('.vue') ? path : path + '.vue'
+  }
+
   // 处理 @/views 开头的路径
   if (componentPath.startsWith('@/views/')) {
     const path = componentPath.replace('@/', '')
-    return () => import(`../${path}`)
+    return () => import(`../${addVueExtension(path)}`)
   }
 
   // 处理 views/ 开头的路径（数据库中的格式）
   if (componentPath.startsWith('views/')) {
     const path = componentPath.replace(/^views\//, '')
-    return () => import(`../views/${path}`)
+    return () => import(`../views/${addVueExtension(path)}`)
   }
 
   // 其他情况，默认为 views/ 目录下的文件
-  return () => import(`../views/${componentPath}`)
+  return () => import(`../views/${addVueExtension(componentPath)}`)
 }
 
 /**
@@ -178,7 +183,8 @@ router.beforeEach(async (to, _from, next) => {
   // 1. 权限未加载（首次访问或刷新页面）
   // 2. 权限已加载但动态路由未注册（极端情况，如首次 loadDynamicRoutes 出现竞态）
   const needLoadRoutes =
-    token && (!permissionStore.loaded || (!isStaticRoute && isSystemRoute && to.matched.length === 0))
+    token &&
+    (!permissionStore.loaded || (!isStaticRoute && isSystemRoute && to.matched.length === 0))
 
   if (needLoadRoutes) {
     try {

@@ -2,7 +2,7 @@
 
 declare module '*.vue' {
   import type { DefineComponent } from 'vue'
-  const component: DefineComponent<{}, {}, any>
+  const component: DefineComponent<Record<string, never>, Record<string, never>, unknown>
   export default component
 }
 
@@ -14,13 +14,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
-
-// Vitest 全局变量
-declare const describe: any
-declare const it: any
-declare const expect: any
-declare const vi: any
-declare const beforeEach: any
-declare const beforeAll: any
-declare const afterEach: any
-declare const afterAll: any

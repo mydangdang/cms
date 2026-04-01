@@ -88,3 +88,79 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+/* ==================== 公共卡片头部样式 ==================== */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ==================== 公共搜索表单样式 ==================== */
+.search-form {
+  margin-bottom: 20px;
+}
+
+/* ==================== 公共表格样式 ==================== */
+.data-table {
+  width: 100%;
+  table-layout: auto;
+}
+
+.data-table .el-table__header-wrapper,
+.data-table .el-table__body-wrapper {
+  width: 100% !important;
+}
+
+.data-table .el-table__header,
+.data-table .el-table__body {
+  width: 100% !important;
+  table-layout: auto;
+}
+
+.data-table .el-table__header th {
+  padding: 12px 0;
+}
+
+.data-table .el-table__body td {
+  padding: 12px 0;
+}
+
+/* ==================== 公共翻页器样式 ==================== */
+.el-pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ==================== 公共文本样式 ==================== */
+/* 时间列当天日期飘红显示 */
+.text-today {
+  color: var(--el-color-danger) !important;
+  font-weight: 500;
+}
+
+/* 次要文字颜色 */
+.text-secondary {
+  color: var(--el-text-color-secondary);
+}
+
+/* 成功颜色 */
+.text-success {
+  color: var(--el-color-success);
+}
+
+/* 危险颜色 */
+.text-danger {
+  color: var(--el-color-danger);
+}
+
+/* 警告颜色 */
+.text-warning {
+  color: var(--el-color-warning);
+}
+
+/* 灰色文字 */
+.text-gray {
+  color: #999;
+}

@@ -9,11 +9,7 @@
         @click="handleTabClick(tab)"
       >
         <span class="tab-title">{{ tab.title }}</span>
-        <span
-          v-if="!tab.affix"
-          class="tab-close"
-          @click.stop="handleTabClose(tab)"
-        >
+        <span v-if="!tab.affix" class="tab-close" @click.stop="handleTabClose(tab)">
           <el-icon><Close /></el-icon>
         </span>
       </div>
@@ -40,7 +36,6 @@
 
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import { Close, ArrowDown } from '@element-plus/icons-vue'
 import { useTabsStore } from '@/store/modules/tabs'
 
@@ -88,11 +83,13 @@ const handleCommand = (command: string) => {
     case 'closeAll':
       tabsStore.closeAllTabs()
       // 导航到第一个 tab 或首页
-      const firstTab = tabsStore.getTabs[0]
-      if (firstTab) {
-        router.push(firstTab.path)
-      } else {
-        router.push('/')
+      {
+        const firstTab = tabsStore.getTabs[0]
+        if (firstTab) {
+          router.push(firstTab.path)
+        } else {
+          router.push('/')
+        }
       }
       break
     case 'closeLeft':

@@ -3,7 +3,22 @@
     "allow": [
       "Bash(git init:*)",
       "Bash(git remote:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(ssh:*)",
+      "Bash(npm run dev:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(npm run test:*)",
+      "Bash(grep:*)",
+      "Bash(npm run build:*)",
+      "Bash(php:*)",
+      "Bash(php -l:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npm run lint -- --fix)",
+      "Bash(npm run lint)"
     ]
   }
 }

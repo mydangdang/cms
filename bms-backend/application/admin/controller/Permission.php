@@ -40,34 +40,9 @@ class Permission extends Base
         }
 
         $permissionModel = model('Permission');
-        $list = $permissionModel->getTreeList($where);
+        $list = $permissionModel->listPermission($where);
 
         $this->apiReturn(200, '获取成功', $list);
-    }
-
-    /**
-     * 获取权限详情
-     * GET /admin/permission/getDetail
-     *
-     * @param Request $request
-     * @return void
-     */
-    public function getDetail(Request $request)
-    {
-        $permissionId = $request->param('permission_id', 0);
-
-        if ($permissionId <= 0) {
-            $this->apiReturn(400, '参数错误');
-        }
-
-        $permissionModel = model('Permission');
-        $permission = $permissionModel->findById($permissionId);
-
-        if (empty($permission)) {
-            $this->apiReturn(400, '权限不存在');
-        }
-
-        $this->apiReturn(200, '获取成功', $permission);
     }
 
     /**
@@ -135,7 +110,7 @@ class Permission extends Base
             'status' => $status
         );
 
-        $result = $permissionModel->add($data);
+        $result = $permissionModel->addPermission($data);
 
         if ($result) {
             // 清除全局 API 权限缓存
@@ -235,7 +210,7 @@ class Permission extends Base
             'status' => $status
         );
 
-        $result = $permissionModel->edit($permissionId, $data);
+        $result = $permissionModel->editPermission($permissionId, $data);
 
         if ($result) {
             // 清除全局 API 权限缓存
@@ -276,10 +251,10 @@ class Permission extends Base
         }
 
         // 删除角色与权限的关联
-        \think\Db::name('role_permissions')->where('permission_id', $permissionId)->delete();
+        $permissionModel->deleteRolePermissions($permissionId);
 
         // 删除权限
-        $result = $permissionModel->remove($permissionId);
+        $result = $permissionModel->deletePermission($permissionId);
 
         if ($result) {
             // 清除全局 API 权限缓存
@@ -289,6 +264,48 @@ class Permission extends Base
             $this->apiReturn(200, '删除成功');
         } else {
             $this->apiReturn(400, '删除失败');
+        }
+    }
+
+    /**
+     * 更新权限排序
+     * POST /admin/permission/sort
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function resort(Request $request)
+    {
+        $permissionId = $request->param('permission_id', 0);
+        $sortOrder = $request->param('sort_order', 0);
+
+        // 参数校验
+        if ($permissionId <= 0) {
+            $this->apiReturn(400, '参数错误');
+        }
+
+        // 验证排序值
+        if (!is_numeric($sortOrder) || $sortOrder < 0) {
+            $this->apiReturn(400, '排序值必须是非负整数');
+        }
+
+        $permissionModel = model('Permission');
+        $permission = $permissionModel->findById($permissionId);
+
+        if (empty($permission)) {
+            $this->apiReturn(400, '权限不存在');
+        }
+
+        $result = $permissionModel->editPermission($permissionId, array('sort_order' => $sortOrder));
+
+        if ($result !== false) {
+            // 清除全局 API 权限缓存
+            $permissionModel->clearAllApiPermissionsCache();
+            // 清除所有管理员的权限缓存
+            $permissionModel->clearAllAdminPermissionCache();
+            $this->apiReturn(200, '排序更新成功');
+        } else {
+            $this->apiReturn(400, '排序更新失败');
         }
     }
 

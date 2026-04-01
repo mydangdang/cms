@@ -7,7 +7,7 @@ use think\Model;
  *
  * 功能：管理员数据操作
  */
-class Admin extends Model
+class Manager extends Model
 {
     /**
      * 表名
@@ -31,7 +31,9 @@ class Admin extends Model
      */
     public function findByUsername($username)
     {
-        return $this->where('username', $username)->find();
+        return $this->where('username', $username)
+            ->where('deleted_at', 0)
+            ->find();
     }
 
     /**
@@ -42,7 +44,9 @@ class Admin extends Model
      */
     public function findById($adminId)
     {
-        return $this->where('admin_id', $adminId)->find();
+        return $this->where('admin_id', $adminId)
+            ->where('deleted_at', 0)
+            ->find();
     }
 
     /**
@@ -71,16 +75,21 @@ class Admin extends Model
     /**
      * 检查管理员状态
      *
-     * @param array $admin 管理员数据
+     * @param array $manager 管理员数据
      * @return bool
      */
-    public function checkStatus($admin)
+    public function checkStatus($manager)
     {
-        if (empty($admin)) {
+        if (empty($manager)) {
             return false;
         }
 
-        $status = isset($admin['status']) ? $admin['status'] : 1;
+        $deletedAt = isset($manager['deleted_at']) ? intval($manager['deleted_at']) : 0;
+        if ($deletedAt > 0) {
+            return false;
+        }
+
+        $status = isset($manager['status']) ? $manager['status'] : 1;
         return $status == 1;
     }
 
@@ -90,18 +99,20 @@ class Admin extends Model
      * @param int $adminId 管理员ID
      * @return array|null
      */
-    public function getAdminInfo($adminId)
+    public function getManagerInfo($adminId)
     {
-        $admin = $this->where('admin_id', $adminId)->find();
+        $manager = $this->where('admin_id', $adminId)
+            ->where('deleted_at', 0)
+            ->find();
 
-        if (empty($admin)) {
+        if (empty($manager)) {
             return null;
         }
 
         // 移除密码字段
-        unset($admin['password']);
+        unset($manager['password']);
 
-        return $admin;
+        return $manager;
     }
 
     /**
@@ -130,7 +141,7 @@ class Admin extends Model
      * @param int $limit 每页数量
      * @return array
      */
-    public function getList($where = array(), $page = 1, $limit = 20)
+    public function listManager($where = array(), $page = 1, $limit = 20)
     {
         $map = array();
 
@@ -212,7 +223,7 @@ class Admin extends Model
      * @param array $adminIds 管理员ID数组
      * @return array 以 admin_id 为键，包含 role_ids 和 roles 的关联数组
      */
-    public function getRolesForAdmins($adminIds)
+    public function getRolesForManagers($adminIds)
     {
         if (empty($adminIds)) {
             return array();
@@ -361,7 +372,7 @@ class Admin extends Model
      * @param array $data 管理员数据
      * @return int|bool 管理员ID
      */
-    public function add($data)
+    public function addManager($data)
     {
         // 密码哈希处理（如果需要）
         if (isset($data['password']) && !empty($data['password'])) {
@@ -382,7 +393,7 @@ class Admin extends Model
      * @param array $data 管理员数据
      * @return bool
      */
-    public function edit($adminId, $data)
+    public function editManager($adminId, $data)
     {
         // 如果提供了新密码，需要哈希处理
         if (isset($data['password']) && !empty($data['password'])) {
@@ -416,15 +427,26 @@ class Admin extends Model
      * @param int $adminId 管理员ID
      * @return bool
      */
-    public function remove($adminId)
+    public function deleteManager($adminId)
     {
-        // 删除管理员与角色的关联
-        \think\Db::name('admin_roles')->where('admin_id', $adminId)->delete();
+        return \think\Db::transaction(function() use ($adminId) {
+            // 删除管理员与角色的关联
+            $adminRoles = \think\Db::name('admin_roles');
+            $adminRoles->where('admin_id', $adminId)->delete();
 
-        // 软删除管理员
-        return $this->where('admin_id', $adminId)->update(array(
-            'deleted_at' => time(),
-            'updated_at' => time()
-        )) !== false;
+            // 软删除管理员
+            $result = $this->where('admin_id', $adminId)->update(array(
+                'deleted_at' => time(),
+                'updated_at' => time()
+            ));
+
+            if ($result === false) {
+                return false;
+            }
+
+            model('Permission')->clearPermissionCache($adminId);
+
+            return true;
+        });
     }
 }

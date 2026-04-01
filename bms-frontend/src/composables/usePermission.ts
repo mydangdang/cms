@@ -33,6 +33,6 @@ export const usePermission = () => {
   return {
     hasPermission,
     hasAnyPermission,
-    hasAllPermissions
+    hasAllPermissions,
   }
 }

@@ -48,7 +48,7 @@ class Crontab extends Model
      * @param int $limit 每页数量
      * @return array
      */
-    public function getList($where = array(), $page = 1, $limit = 10)
+    public function listCrontab($where = array(), $page = 1, $limit = 10)
     {
         $map = array();
         $map['deleted_at'] = 0;
@@ -67,7 +67,7 @@ class Crontab extends Model
         $total = $this->where($map)->count();
 
         // 获取列表
-        $list = $this->where($map)->order('sort_order ASC, crontab_id DESC')->page($page, $limit)->select();
+        $list = $this->where($map)->order('sort_order DESC, crontab_id DESC')->page($page, $limit)->select();
 
         // 获取所有任务的最后执行时间
         $crontabIds = array();
@@ -111,7 +111,7 @@ class Crontab extends Model
      * @param int $crontabId 任务ID
      * @return array|null
      */
-    public function getDetail($crontabId)
+    public function detailCrontab($crontabId)
     {
         $crontab = $this->where(array(
             'crontab_id' => $crontabId,
@@ -139,7 +139,7 @@ class Crontab extends Model
      * @param array $data 任务数据
      * @return int|false 任务ID或false
      */
-    public function add($data)
+    public function addCrontab($data)
     {
         $data['created_at'] = time();
         $data['updated_at'] = time();
@@ -154,7 +154,7 @@ class Crontab extends Model
      * @param array $data 任务数据
      * @return bool
      */
-    public function edit($crontabId, $data)
+    public function editCrontab($crontabId, $data)
     {
         $data['updated_at'] = time();
 
@@ -171,7 +171,7 @@ class Crontab extends Model
      * @param int $crontabId 任务ID
      * @return bool
      */
-    public function remove($crontabId)
+    public function deleteCrontab($crontabId)
     {
         $data = array(
             'deleted_at' => time(),
@@ -439,5 +439,17 @@ class Crontab extends Model
             'list' => $list,
             'total' => $total
         );
+    }
+
+    /**
+     * 清空任务的所有执行记录
+     * @param int $crontabId 任务ID
+     * @return bool
+     */
+    public function clearLogs($crontabId)
+    {
+        return \think\Db::name('crontab_logs')
+            ->where('crontab_id', $crontabId)
+            ->delete() !== false;
     }
 }

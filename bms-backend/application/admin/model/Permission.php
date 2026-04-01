@@ -39,7 +39,7 @@ class Permission extends Model
      * @param array $where 查询条件
      * @return array
      */
-    public function getTreeList($where = array())
+    public function listPermission($where = array())
     {
         $map = array();
 
@@ -228,7 +228,7 @@ class Permission extends Model
      * @param array $data 权限数据
      * @return int|bool 新增的权限ID 或 false
      */
-    public function add($data)
+    public function addPermission($data)
     {
         $time = time();
         $data['created_at'] = $time;
@@ -245,7 +245,7 @@ class Permission extends Model
      * @param array $data 权限数据
      * @return bool 是否成功
      */
-    public function edit($permissionId, $data)
+    public function editPermission($permissionId, $data)
     {
         $data['updated_at'] = time();
 
@@ -258,7 +258,7 @@ class Permission extends Model
      * @param int $permissionId 权限ID
      * @return bool 是否成功
      */
-    public function remove($permissionId)
+    public function deletePermission($permissionId)
     {
         return $this->where('permission_id', $permissionId)->update(array(
             'deleted_at' => time(),

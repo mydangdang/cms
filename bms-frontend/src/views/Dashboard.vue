@@ -2,7 +2,7 @@
   <div class="dashboard-container">
     <el-card class="welcome-card">
       <template #header>
-        <h2 class="welcome-title">欢迎使用 BMS 后台管理系统</h2>
+        <h2 class="welcome-title">欢迎使用 {{ appTitle }}</h2>
       </template>
 
       <div class="welcome-content">
@@ -33,12 +33,15 @@ import { useAdminStore } from '@/store/modules/admin'
 
 // 组件名称用于 KeepAlive 缓存
 defineOptions({
-  name: 'Dashboard'
+  name: 'Dashboard',
 })
 
 const adminStore = useAdminStore()
 
 const adminInfo = computed(() => adminStore.adminInfo)
+
+// 系统名称（从环境变量读取）
+const appTitle = import.meta.env.VITE_APP_TITLE
 </script>
 
 <style scoped>

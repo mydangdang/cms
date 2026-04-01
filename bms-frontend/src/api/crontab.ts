@@ -69,14 +69,6 @@ export const getCrontabList = (params?: {
 }
 
 /**
- * 获取任务详情
- * GET /admin/crontab/getDetail
- */
-export const getCrontabDetail = (crontab_id: number) => {
-  return request.get<Crontab>('/admin/crontab/getDetail', { params: { crontab_id } })
-}
-
-/**
  * 新增定时任务
  * POST /admin/crontab/add
  */
@@ -98,6 +90,16 @@ export const editCrontab = (data: Partial<Crontab> & { crontab_id: number }) => 
  */
 export const deleteCrontab = (crontab_id: number) => {
   return request.post('/admin/crontab/delete', { crontab_id })
+}
+
+/**
+ * 更新任务排序
+ * POST /admin/crontab/resort
+ * @param crontab_id 任务ID
+ * @param sort_order 排序值
+ */
+export const sortCrontab = (crontab_id: number, sort_order: number) => {
+  return request.post('/admin/crontab/resort', { crontab_id, sort_order })
 }
 
 /**
@@ -125,11 +127,7 @@ export const validateCron = (cron: string) => {
  * 获取执行记录
  * GET /admin/crontab/getLogs
  */
-export const getCrontabLogs = (params: {
-  crontab_id: number
-  page?: number
-  limit?: number
-}) => {
+export const getCrontabLogs = (params: { crontab_id: number; page?: number; limit?: number }) => {
   return request.get<CrontabLogListResponse>('/admin/crontab/getLogs', { params })
 }
 

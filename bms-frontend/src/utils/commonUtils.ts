@@ -14,9 +14,11 @@ export const isToday = (timestamp: number): boolean => {
   if (!timestamp) return false
   const date = new Date(timestamp * 1000)
   const today = new Date()
-  return date.getFullYear() === today.getFullYear() &&
-         date.getMonth() === today.getMonth() &&
-         date.getDate() === today.getDate()
+  return (
+    date.getFullYear() === today.getFullYear() &&
+    date.getMonth() === today.getMonth() &&
+    date.getDate() === today.getDate()
+  )
 }
 
 /**
@@ -119,8 +121,8 @@ export const getRelativeTime = (timestamp: number): string => {
  * 状态值枚举
  */
 export enum Status {
-  DISABLED = 0,  // 禁用/失败
-  ENABLED = 1,   // 启用/成功
+  DISABLED = 0, // 禁用/失败
+  ENABLED = 1, // 启用/成功
 }
 
 /**
@@ -174,7 +176,7 @@ export const STATUS_OPTIONS = [
 export const deepClone = <T>(obj: T): T => {
   if (obj === null || typeof obj !== 'object') return obj
   if (obj instanceof Date) return new Date(obj.getTime()) as unknown as T
-  if (obj instanceof Array) return obj.map(item => deepClone(item)) as unknown as T
+  if (obj instanceof Array) return obj.map((item) => deepClone(item)) as unknown as T
   if (typeof obj === 'object') {
     const copy = {} as T
     for (const key in obj) {
